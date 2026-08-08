@@ -17,6 +17,7 @@
 - [x] Connect SettingsManager sliders (Brightness, Contrast, Strength, Threshold) to Shader.
 - [x] Wrap MainActivity content with PaperEnvironment.
 - [x] Build UI foundations for Paper Apps (Notes, Reader, Gallery, Browser, Notifications).
+- [x] Create and integrate the official PaperScreen two-tone adaptive launcher icon with legacy fallbacks.
 
 ## Current Tasks
 - [ ] Set up Git, .gitignore, and memory files.
