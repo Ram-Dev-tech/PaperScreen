@@ -6,13 +6,14 @@
   - Phase 1-7: UI Foundations (LauncherPager, AppDrawer, FocusPanel, SearchPanel, ControlCenter, SettingsHub)
   - Backend Services: AppRulesRepository, BatteryMonitor, FocusStatsManager, SystemToggleManager, PaperScreenTileService
   - Phase 8: Shared Paper Rendering Engine. Refactored the core rendering loop into `com.paperscreen.android.paper.engine`.
+  - PaperScreen primary launcher icon: strict two-tone adaptive icon plus density-specific legacy fallbacks.
 - **Current Work**:
-  - Verifying the newly extracted rendering architecture and unit tests.
+  - PaperScreen primary launcher icon integration completed; local build verification is pending because this connector environment has no Android build checkout/runtime.
 - **Next Work**:
   - Paper Environment Applications (Paper Notes, Paper Reader, Paper Browser, Paper Files).
   - Phase 9: Final Integration (E-Ink transition simulations, backup/restore logic).
 - **Known Issues**:
-  - None at this time.
+  - Build/test/lint commands were not executable in the current connector-only environment.
 - **Architecture**:
   - Environment-First Android Launcher.
   - No global pixel filtering or AccessibilityService bypasses due to Android 15 unrooted constraints.
@@ -20,7 +21,8 @@
 - **Important Technical Decisions**:
   - Abandoned global pixel filter (MediaProjection/Accessibility) based on unrooted Android 15 constraints.
   - Centralized rendering configuration (`PaperRenderConfig`) to serve as the unified source of truth for color and shading presets across all built-in PaperScreen applications.
+  - PaperScreen launcher identity uses only `#D8D6CF` and `#444444`, with vector-first adaptive resources and raster fallbacks for legacy density buckets.
 - **Latest Build Status**:
-  - Build Successful (`app:assembleDebug`).
+  - Not run after icon integration; Android build runtime was unavailable in the current connector environment.
 - **Latest Test Status**:
-  - Passed (`app:testDebugUnitTest`). Unit tested core color parsing and serialization.
+  - Not run after icon integration; Android build runtime was unavailable in the current connector environment.
