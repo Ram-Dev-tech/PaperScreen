@@ -8,12 +8,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.paperscreen.android.paper.engine.PaperColor
+import com.paperscreen.android.paper.engine.PaperRenderConfig
+import com.paperscreen.android.paper.engine.PaperRenderMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-
-enum class PaperModeType {
-    PAPER, GRAYSCALE, ORIGINAL
-}
 
 enum class DitheringMode {
     LOW, MEDIUM, HIGH
@@ -30,6 +29,8 @@ class PaperModeSettingsManager(private val context: Context) {
         val BRIGHTNESS = intPreferencesKey("brightness")
         val STRENGTH = intPreferencesKey("strength")
         val THRESHOLD = intPreferencesKey("threshold")
+        val LIGHT_COLOR = stringPreferencesKey("light_color")
+        val DARK_COLOR = stringPreferencesKey("dark_color")
         val DITHERING = stringPreferencesKey("dithering")
     }
 
@@ -38,47 +39,51 @@ class PaperModeSettingsManager(private val context: Context) {
             preferences[MASTER_PAPER_MODE_ENABLED] ?: true
         }
 
-    val paperModeType: Flow<PaperModeType> = context.dataStore.data
+    val contrast: Flow<Int> = context.dataStore.data.map { it[CONTRAST] ?: 60 }
+    val brightness: Flow<Int> = context.dataStore.data.map { it[BRIGHTNESS] ?: 70 }
+    val strength: Flow<Int> = context.dataStore.data.map { it[STRENGTH] ?: 80 }
+    val threshold: Flow<Int> = context.dataStore.data.map { it[THRESHOLD] ?: 52 }
+    val dithering: Flow<DitheringMode> = context.dataStore.data.map { 
+        DitheringMode.valueOf(it[DITHERING] ?: DitheringMode.MEDIUM.name) 
+    }
+
+    val paperRenderConfig: Flow<PaperRenderConfig> = context.dataStore.data
         .map { preferences ->
-            PaperModeType.valueOf(preferences[PAPER_MODE_TYPE] ?: PaperModeType.PAPER.name)
+            val mode = try {
+                PaperRenderMode.valueOf(preferences[PAPER_MODE_TYPE] ?: PaperRenderMode.TWO_TONE.name)
+            } catch (e: Exception) {
+                PaperRenderMode.TWO_TONE
+            }
+
+            val lightHex = preferences[LIGHT_COLOR] ?: PaperColor.toHex(PaperColor.DefaultLight)
+            val darkHex = preferences[DARK_COLOR] ?: PaperColor.toHex(PaperColor.DefaultDark)
+
+            val rawThreshold = preferences[THRESHOLD] ?: 52
+            val rawStrength = preferences[STRENGTH] ?: 100
+            val rawBrightness = preferences[BRIGHTNESS] ?: 50 // Assume 50 is neutral for UI slider
+            val rawContrast = preferences[CONTRAST] ?: 50     // Assume 50 is neutral for UI slider
+
+            PaperRenderConfig(
+                lightColor = PaperColor.fromHex(lightHex, PaperColor.DefaultLight),
+                darkColor = PaperColor.fromHex(darkHex, PaperColor.DefaultDark),
+                threshold = rawThreshold / 100f,
+                strength = rawStrength / 100f,
+                brightness = (rawBrightness - 50f) / 100f,
+                contrast = rawContrast / 50f,
+                mode = mode
+            )
         }
 
-    val contrast: Flow<Int> = context.dataStore.data
-        .map { preferences ->
-            preferences[CONTRAST] ?: 60
-        }
-
-    val brightness: Flow<Int> = context.dataStore.data
-        .map { preferences ->
-            preferences[BRIGHTNESS] ?: 70
-        }
-
-    val strength: Flow<Int> = context.dataStore.data
-        .map { preferences ->
-            preferences[STRENGTH] ?: 80
-        }
-
-    val threshold: Flow<Int> = context.dataStore.data
-        .map { preferences ->
-            preferences[THRESHOLD] ?: 50
-        }
-
-    val dithering: Flow<DitheringMode> = context.dataStore.data
-        .map { preferences ->
-            DitheringMode.valueOf(preferences[DITHERING] ?: DitheringMode.MEDIUM.name)
-        }
-
-
-
+    // Individual setters
     suspend fun setMasterPaperModeEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[MASTER_PAPER_MODE_ENABLED] = enabled
         }
     }
 
-    suspend fun setPaperModeType(type: PaperModeType) {
+    suspend fun setPaperRenderMode(mode: PaperRenderMode) {
         context.dataStore.edit { preferences ->
-            preferences[PAPER_MODE_TYPE] = type.name
+            preferences[PAPER_MODE_TYPE] = mode.name
         }
     }
 
@@ -106,6 +111,18 @@ class PaperModeSettingsManager(private val context: Context) {
         }
     }
 
+    suspend fun setLightColor(hex: String) {
+        context.dataStore.edit { preferences ->
+            preferences[LIGHT_COLOR] = hex
+        }
+    }
+
+    suspend fun setDarkColor(hex: String) {
+        context.dataStore.edit { preferences ->
+            preferences[DARK_COLOR] = hex
+        }
+    }
+    
     suspend fun setDithering(ditheringMode: DitheringMode) {
         context.dataStore.edit { preferences ->
             preferences[DITHERING] = ditheringMode.name

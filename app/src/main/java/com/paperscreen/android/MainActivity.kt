@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
     setContent {
       PaperScreenTheme { 
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { 
-          com.paperscreen.android.engine.PaperEnvironment {
+          com.paperscreen.android.paper.engine.PaperEnvironment {
             MainNavigation() 
           }
         } 

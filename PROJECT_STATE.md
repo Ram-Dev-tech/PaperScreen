@@ -1,25 +1,26 @@
 # PROJECT_STATE.md
 
 - **Current Project Version**: v1.0.0
-- **Current Development Phase**: Phase 8 Completed (GitHub Setup in progress)
+- **Current Development Phase**: Phase 8 Completed (Shared Paper Rendering Engine)
 - **Completed Work**:
   - Phase 1-7: UI Foundations (LauncherPager, AppDrawer, FocusPanel, SearchPanel, ControlCenter, SettingsHub)
   - Backend Services: AppRulesRepository, BatteryMonitor, FocusStatsManager, SystemToggleManager, PaperScreenTileService
-  - Phase 8: Shared Paper Rendering Engine & Environment. Created AGSL RuntimeShader applied via Compose wrapper to securely and natively render the Paper UI without overlay/Accessibility hacks.
+  - Phase 8: Shared Paper Rendering Engine. Refactored the core rendering loop into `com.paperscreen.android.paper.engine`.
 - **Current Work**:
-  - Setting up the Git and GitHub project memory/repository.
+  - Verifying the newly extracted rendering architecture and unit tests.
 - **Next Work**:
-  - Phase 9: Final Integration (E-Ink transition simulations, app exclusion logic, backups, unit testing).
+  - Paper Environment Applications (Paper Notes, Paper Reader, Paper Browser, Paper Files).
+  - Phase 9: Final Integration (E-Ink transition simulations, backup/restore logic).
 - **Known Issues**:
-  - Building requires explicit configuration of Java 17 and Gradle due to Android 15 & Compose requirements.
+  - None at this time.
 - **Architecture**:
-  - Single-activity Jetpack Compose Architecture.
-  - Native Launcher configured via AndroidManifest.
-  - State management via DataStore and Kotlin Flows.
+  - Environment-First Android Launcher.
+  - No global pixel filtering or AccessibilityService bypasses due to Android 15 unrooted constraints.
+  - All Paper apps natively share the `PaperEnvironment` and `PaperRenderConfig` which applies an AGSL `RuntimeShader` via Compose's `Modifier.graphicsLayer`.
 - **Important Technical Decisions**:
   - Abandoned global pixel filter (MediaProjection/Accessibility) based on unrooted Android 15 constraints.
-  - Utilizing `Modifier.graphicsLayer` and `RenderEffect.createRuntimeShaderEffect(AGSL)` to render the two-tone filter natively on all PaperScreen-owned surfaces.
+  - Centralized rendering configuration (`PaperRenderConfig`) to serve as the unified source of truth for color and shading presets across all built-in PaperScreen applications.
 - **Latest Build Status**:
-  - Build Successful in Debug Mode (`app:assembleDebug`).
+  - Build Successful (`app:assembleDebug`).
 - **Latest Test Status**:
-  - N/A (Unit testing pending in Phase 9).
+  - Passed (`app:testDebugUnitTest`). Unit tested core color parsing and serialization.

@@ -45,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.paperscreen.android.papermode.DitheringMode
 import com.paperscreen.android.papermode.PaperModeSettingsManager
-import com.paperscreen.android.papermode.PaperModeType
+import com.paperscreen.android.paper.engine.PaperRenderConfig
+import com.paperscreen.android.paper.engine.PaperRenderMode
+import com.paperscreen.android.paper.engine.PaperPreview
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +62,7 @@ fun PaperModeSettingsScreen(
     val scrollState = rememberScrollState()
 
     val isMasterEnabled by settingsManager.masterPaperModeEnabled.collectAsState(initial = true)
-    val paperModeType by settingsManager.paperModeType.collectAsState(initial = PaperModeType.PAPER)
+    val config by settingsManager.paperRenderConfig.collectAsState(initial = PaperRenderConfig())
     
     val contrast by settingsManager.contrast.collectAsState(initial = 60)
     val brightness by settingsManager.brightness.collectAsState(initial = 70)
@@ -137,6 +139,11 @@ fun PaperModeSettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+        
+        // Live Preview
+        PaperPreview(config = config)
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Mode Options
         Text(
@@ -147,9 +154,10 @@ fun PaperModeSettingsScreen(
         )
 
         val modes = listOf(
-            PaperModeType.PAPER to "Paper (Recommended)",
-            PaperModeType.GRAYSCALE to "Grayscale",
-            PaperModeType.ORIGINAL to "Original"
+            PaperRenderMode.TWO_TONE to "Two Tone (Recommended)",
+            PaperRenderMode.GRAYSCALE to "Grayscale",
+            PaperRenderMode.PAPER to "Paper Shades",
+            PaperRenderMode.ORIGINAL to "Original"
         )
         
         modes.forEach { (modeType, label) ->
@@ -158,14 +166,14 @@ fun PaperModeSettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { 
-                        coroutineScope.launch { settingsManager.setPaperModeType(modeType) }
+                        coroutineScope.launch { settingsManager.setPaperRenderMode(modeType) }
                     }
                     .padding(vertical = 12.dp)
             ) {
                 RadioButton(
-                    selected = (modeType == paperModeType),
+                    selected = (modeType == config.mode),
                     onClick = { 
-                        coroutineScope.launch { settingsManager.setPaperModeType(modeType) }
+                        coroutineScope.launch { settingsManager.setPaperRenderMode(modeType) }
                     },
                     colors = RadioButtonDefaults.colors(
                         selectedColor = MaterialTheme.colorScheme.onBackground,
