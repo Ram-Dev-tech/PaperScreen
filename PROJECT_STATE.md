@@ -1,0 +1,25 @@
+# PROJECT_STATE.md
+
+- **Current Project Version**: v1.0.0
+- **Current Development Phase**: Phase 8 Completed (GitHub Setup in progress)
+- **Completed Work**:
+  - Phase 1-7: UI Foundations (LauncherPager, AppDrawer, FocusPanel, SearchPanel, ControlCenter, SettingsHub)
+  - Backend Services: AppRulesRepository, BatteryMonitor, FocusStatsManager, SystemToggleManager, PaperScreenTileService
+  - Phase 8: Shared Paper Rendering Engine & Environment. Created AGSL RuntimeShader applied via Compose wrapper to securely and natively render the Paper UI without overlay/Accessibility hacks.
+- **Current Work**:
+  - Setting up the Git and GitHub project memory/repository.
+- **Next Work**:
+  - Phase 9: Final Integration (E-Ink transition simulations, app exclusion logic, backups, unit testing).
+- **Known Issues**:
+  - Building requires explicit configuration of Java 17 and Gradle due to Android 15 & Compose requirements.
+- **Architecture**:
+  - Single-activity Jetpack Compose Architecture.
+  - Native Launcher configured via AndroidManifest.
+  - State management via DataStore and Kotlin Flows.
+- **Important Technical Decisions**:
+  - Abandoned global pixel filter (MediaProjection/Accessibility) based on unrooted Android 15 constraints.
+  - Utilizing `Modifier.graphicsLayer` and `RenderEffect.createRuntimeShaderEffect(AGSL)` to render the two-tone filter natively on all PaperScreen-owned surfaces.
+- **Latest Build Status**:
+  - Build Successful in Debug Mode (`app:assembleDebug`).
+- **Latest Test Status**:
+  - N/A (Unit testing pending in Phase 9).
