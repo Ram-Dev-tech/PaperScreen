@@ -22,6 +22,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -39,9 +40,6 @@ android {
     }
 }
 
-kotlin {
-    jvmToolchain(17)
-}
 
 dependencies {
   val composeBom = platform(libs.androidx.compose.bom)
@@ -86,4 +84,14 @@ dependencies {
   // Datastore
   implementation(libs.androidx.datastore.preferences)
   implementation(libs.kotlinx.serialization.json)
+  
+  // Room
+  implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.room.ktx)
+  annotationProcessor(libs.androidx.room.compiler)
+  
+  // Readium
+  implementation(libs.readium.shared)
+  implementation(libs.readium.streamer)
+  coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
