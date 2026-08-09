@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LauncherPager(onLaunchLibrary: () -> Unit) {
+fun LauncherPager(onLaunchLibrary: () -> Unit, onLaunchSettings: () -> Unit) {
     // Horizontal pager for App Drawer (0) <- Home (1) -> Focus (2)
     val horizontalState = rememberPagerState(initialPage = 1, pageCount = { 3 })
     
@@ -22,7 +22,14 @@ fun LauncherPager(onLaunchLibrary: () -> Unit) {
         modifier = Modifier.fillMaxSize()
     ) { hPage ->
         when (hPage) {
-            0 -> AppDrawerScreen()
+            0 -> com.paperscreen.android.launcher.ui.AppLauncherScreen(
+                onNavigateToPaperApp = { destination ->
+                    when (destination) {
+                        com.paperscreen.android.launcher.PaperDestination.LIBRARY -> onLaunchLibrary()
+                        com.paperscreen.android.launcher.PaperDestination.SETTINGS -> onLaunchSettings()
+                    }
+                }
+            )
             1 -> {
                 VerticalPager(
                     state = verticalState,

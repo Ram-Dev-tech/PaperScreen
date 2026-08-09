@@ -40,7 +40,8 @@ fun MainNavigation(initialIntent: Intent? = null) {
       entryProvider {
         entry<Main> {
           LauncherPager(
-            onLaunchLibrary = { backStack.add(Library) }
+            onLaunchLibrary = { backStack.add(Library) },
+            onLaunchSettings = { backStack.add(Settings) }
           )
         }
         entry<Library> {
@@ -68,11 +69,19 @@ fun MainNavigation(initialIntent: Intent? = null) {
             }
           )
         }
+        entry<Settings> {
+          com.paperscreen.android.ui.settings.SettingsScreen(
+            onNavigate = {
+              // Stub for deeper settings navigation
+            }
+          )
+        }
       },
   )
 }
 
 @Serializable object Main : NavKey
 @Serializable object Library : NavKey
+@Serializable object Settings : NavKey
 @Serializable data class Reader(val bookId: Long) : NavKey
 @Serializable data class Viewer(val uriString: String, val mimeType: String?) : NavKey
