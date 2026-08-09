@@ -82,7 +82,7 @@ class LauncherRepository(private val context: Context) {
                 false
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("LauncherRepository", "Failed to launch app", e)
             false
         }
     }

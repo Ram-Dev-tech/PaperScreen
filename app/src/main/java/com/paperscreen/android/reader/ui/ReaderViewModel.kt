@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.paperscreen.android.reader.data.BookEntity
 import com.paperscreen.android.reader.data.PaperReaderDatabase
 import com.paperscreen.android.reader.parser.EpubReaderEngineFacade
-import com.paperscreen.android.reader.parser.PdfReaderEngineFacade
+
 import com.paperscreen.android.reader.parser.ReaderEngine
 import com.paperscreen.android.reader.parser.TxtReaderEngineFacade
 import com.paperscreen.android.reader.parser.EpubTocItem
@@ -75,7 +75,6 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                 val engine: ReaderEngine = when (currentBook!!.fileType) {
                     "TXT" -> TxtReaderEngineFacade(getApplication(), uri)
                     "EPUB" -> EpubReaderEngineFacade(getApplication(), uri)
-                    "PDF" -> PdfReaderEngineFacade(getApplication(), uri)
                     else -> throw IllegalArgumentException("Unsupported file type")
                 }
                 
@@ -86,16 +85,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                     return@launch
                 }
 
-                if (currentBook!!.fileType == "PDF") {
-                    val pdfEngine = engine as PdfReaderEngineFacade
-                    _state.value = ReaderState.Success(
-                        title = currentBook!!.title,
-                        fileType = "PDF",
-                        engine = engine,
-                        initialPosition = currentBook!!.currentPosition,
-                        pageCount = pdfEngine.getPageOrChapterCount()
-                    )
-                } else if (currentBook!!.fileType == "EPUB") {
+                if (currentBook!!.fileType == "EPUB") {
                     val epubEngine = engine as EpubReaderEngineFacade
                     
                     // Parse locator to get chapter index (fallback to 0)
@@ -150,7 +140,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                 }
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("ReaderViewModel", "Failed to open document", e)
                 _state.value = ReaderState.Error(e.message ?: "Failed to open document")
             }
         }

@@ -13,7 +13,9 @@ import org.readium.r2.shared.publication.*
 import org.readium.r2.shared.util.Url
 import org.readium.r2.shared.util.mediatype.MediaType
 import org.junit.Ignore
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Ignore("Robolectric ASM failure with SDK 36")
 @RunWith(RobolectricTestRunner::class)
 class EpubReaderEngineTest {

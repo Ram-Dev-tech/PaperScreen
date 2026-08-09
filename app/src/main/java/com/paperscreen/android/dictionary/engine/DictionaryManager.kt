@@ -102,7 +102,7 @@ class DictionaryManager(
             dao.insertEntries(entries)
             return true
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("DictionaryManager", "Failed to parse stardict", e)
             return false
         }
     }

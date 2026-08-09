@@ -27,18 +27,7 @@ class TxtReaderEngineFacade(private val context: Context, private val uri: Uri) 
     override fun close() {}
 }
 
-class PdfReaderEngineFacade(context: Context, uri: Uri) : ReaderEngine() {
-    private val parser = PdfParser(context, uri)
 
-    override suspend fun open(): Boolean = parser.open()
-    override fun getPageOrChapterCount(): Int = parser.getPageCount()
-    override fun getTitle(): String? = null
-    override fun close() = parser.close()
-    
-    suspend fun renderPage(pageIndex: Int, scaleFactor: Float = 1.0f): Bitmap? {
-        return parser.renderPage(pageIndex, scaleFactor)
-    }
-}
 
 class EpubReaderEngineFacade(context: Context, uri: Uri) : ReaderEngine() {
     private val engine = EpubReaderEngine(context, uri)

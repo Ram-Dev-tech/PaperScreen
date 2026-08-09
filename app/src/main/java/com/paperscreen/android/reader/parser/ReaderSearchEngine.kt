@@ -44,7 +44,7 @@ class ReaderSearchEngine(private val application: Application, private val engin
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("ReaderSearchEngine", "Search failed", e)
             }
         }
     }

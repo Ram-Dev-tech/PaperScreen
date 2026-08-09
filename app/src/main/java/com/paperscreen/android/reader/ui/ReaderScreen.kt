@@ -26,7 +26,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.paperscreen.android.reader.parser.PdfReaderEngineFacade
+
 import com.paperscreen.android.reader.settings.ReaderSettingsManager
 import com.paperscreen.android.reader.settings.ReaderSettings
 import com.paperscreen.android.reader.settings.readerDataStore
@@ -222,31 +222,7 @@ fun ReaderScreen(
                             }
                     }
 
-                    if (currentState.fileType == "PDF" && currentState.engine is PdfReaderEngineFacade) {
-                        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
-                            items(currentState.pageCount) { index ->
-                                var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-                                
-                                LaunchedEffect(index) {
-                                    coroutineScope.launch {
-                                        bitmap = (currentState.engine as PdfReaderEngineFacade).renderPage(index, 2.0f)
-                                    }
-                                }
-                                
-                                if (bitmap != null) {
-                                    Image(
-                                        bitmap = bitmap!!.asImageBitmap(),
-                                        contentDescription = "Page $index",
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                } else {
-                                    Box(modifier = Modifier.fillMaxWidth().height(400.dp), contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                            }
-                        }
-                    } else {
+
                         val hMargin = when (settings.margins) {
                             "Narrow" -> 8.dp
                             "Wide" -> 32.dp
@@ -426,7 +402,6 @@ fun ReaderScreen(
                                 }
                             }
                         }
-                    }
                     
                     if (currentState.fileType == "EPUB") {
                         Box(modifier = Modifier.fillMaxSize()) {

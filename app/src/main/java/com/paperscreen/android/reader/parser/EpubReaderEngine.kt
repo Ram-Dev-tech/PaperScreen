@@ -55,7 +55,7 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
             
             return@withContext publication != null
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("EpubReaderEngine", "Failed to open EPUB", e)
             return@withContext false
         }
     }
@@ -97,7 +97,7 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
                 if (index != -1) return index
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("EpubReaderEngine", "Failed to parse locator", e)
         }
         return 0
     }

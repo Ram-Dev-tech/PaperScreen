@@ -26,7 +26,7 @@ object TxtParser {
                 return@withContext Pair(String(buffer, 0, charsRead), offset + charsRead)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("TxtParser", "Failed to read chunk", e)
         }
         Pair("", offset)
     }
@@ -37,7 +37,7 @@ object TxtParser {
                 return@withContext pfd.statSize
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("TxtParser", "Failed to get total size", e)
         }
         0L
     }

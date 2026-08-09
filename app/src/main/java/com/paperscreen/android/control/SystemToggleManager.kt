@@ -41,7 +41,7 @@ class SystemToggleManager(private val context: Context) {
                 settingsIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(settingsIntent)
             } catch (ex: Exception) {
-                ex.printStackTrace() // Unable to launch any settings
+                android.util.Log.e("SystemToggleManager", "Unable to launch settings", ex)
             }
         }
     }
@@ -104,7 +104,7 @@ class SystemToggleManager(private val context: Context) {
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("SystemToggleManager", "Unable to launch intent", e)
         }
     }
 }

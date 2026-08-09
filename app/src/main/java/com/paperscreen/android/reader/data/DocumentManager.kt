@@ -57,7 +57,7 @@ object DocumentManager {
                 coverUriString = null
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("DocumentManager", "Failed to extract metadata", e)
             null
         }
     }
