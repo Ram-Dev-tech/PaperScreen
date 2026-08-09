@@ -30,8 +30,29 @@ class LibraryViewModelTest {
             progressPercentage = 1f,
             isFavorite = false,
             lastOpenedAt = 500L
+        ),
+        BookEntity(
+            uriString = "uri4",
+            title = "D Book",
+            fileType = "TXT",
+            progressPercentage = 0f,
+            isFavorite = false,
+            lastOpenedAt = 0L // Never opened
         )
     )
+
+    @Test
+    fun `test section Recent excludes un-opened books`() {
+        val result = LibraryViewModel.applyFiltersAndSort(
+            sampleBooks,
+            LibrarySection.Recent,
+            SortOrder.TitleAZ,
+            FilterFormat.All
+        )
+        // D Book (lastOpenedAt = 0) should not appear
+        assertEquals(3, result.size)
+        assertEquals(false, result.any { it.title == "D Book" })
+    }
 
     @Test
     fun `test section ContinueReading`() {
@@ -89,10 +110,11 @@ class LibraryViewModelTest {
             SortOrder.Recent,
             FilterFormat.All
         )
-        assertEquals(3, result.size)
+        assertEquals(4, result.size)
         assertEquals("B Book", result[0].title) // 2000L
         assertEquals("A Book", result[1].title) // 1000L
         assertEquals("C Book", result[2].title) // 500L
+        assertEquals("D Book", result[3].title) // 0L
     }
 
     @Test
@@ -103,9 +125,10 @@ class LibraryViewModelTest {
             SortOrder.TitleAZ,
             FilterFormat.All
         )
-        assertEquals(3, result.size)
+        assertEquals(4, result.size)
         assertEquals("A Book", result[0].title)
         assertEquals("B Book", result[1].title)
         assertEquals("C Book", result[2].title)
+        assertEquals("D Book", result[3].title)
     }
 }

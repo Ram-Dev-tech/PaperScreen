@@ -77,7 +77,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
             // Apply Section
             filtered = when (section) {
-                LibrarySection.Recent -> filtered 
+                LibrarySection.Recent -> filtered.filter { it.lastOpenedAt > 0L } 
                 LibrarySection.ContinueReading -> filtered.filter { it.progressPercentage > 0f && it.progressPercentage < 1f }
                 LibrarySection.Favorites -> filtered.filter { it.isFavorite }
                 LibrarySection.Completed -> filtered.filter { it.progressPercentage >= 1f }
@@ -127,8 +127,6 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 val existing = dao.getBookByUri(bookEntity.uriString)
                 if (existing == null) {
                     dao.insertBook(bookEntity)
-                } else {
-                    dao.updateBook(existing.copy(lastOpenedAt = System.currentTimeMillis()))
                 }
             }
         }
