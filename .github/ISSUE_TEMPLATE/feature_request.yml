@@ -1,0 +1,21 @@
+name: 💡 Suggest an Idea
+description: Suggest an idea for PaperScreen
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea-description
+    attributes:
+      label: What would you like PaperScreen to do?
+    validations:
+      required: true
+  - type: textarea
+    id: idea-reason
+    attributes:
+      label: Why would it be useful?
+    validations:
+      required: true
+  - type: textarea
+    id: additional-details
+    attributes:
+      label: Optional additional details

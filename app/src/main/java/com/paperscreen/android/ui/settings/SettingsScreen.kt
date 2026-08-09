@@ -20,6 +20,10 @@ import androidx.compose.material.icons.outlined.CenterFocusWeak
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
@@ -29,7 +33,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import com.paperscreen.android.feedback.FeedbackManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -50,6 +56,8 @@ fun SettingsScreen(
         SettingsItemData("Backup & Restore", Icons.Outlined.Backup),
         SettingsItemData("About", Icons.Outlined.Info)
     )
+
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -72,6 +80,38 @@ fun SettingsScreen(
                 SettingsRow(
                     item = item,
                     onClick = { onNavigate(item.title) }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    text = "HELP & FEEDBACK",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+
+            item {
+                SettingsRow(
+                    item = SettingsItemData("Report a Problem", Icons.Outlined.BugReport),
+                    onClick = { FeedbackManager.reportBug(context) }
+                )
+                SettingsRow(
+                    item = SettingsItemData("Suggest an Idea", Icons.Outlined.Lightbulb),
+                    onClick = { FeedbackManager.suggestFeature(context) }
+                )
+                SettingsRow(
+                    item = SettingsItemData("Give Feedback", Icons.Outlined.ChatBubbleOutline),
+                    onClick = { FeedbackManager.giveFeedback(context) }
+                )
+                SettingsRow(
+                    item = SettingsItemData("GitHub Project", Icons.Outlined.Code),
+                    onClick = { FeedbackManager.openGitHubProject(context) }
                 )
             }
         }

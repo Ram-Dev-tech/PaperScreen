@@ -1,0 +1,19 @@
+name: 💬 Give Feedback
+description: Give feedback about PaperScreen
+title: "[Feedback]: "
+labels: ["feedback"]
+body:
+  - type: textarea
+    id: feedback-content
+    attributes:
+      label: Your feedback
+    validations:
+      required: true
+  - type: textarea
+    id: feedback-likes
+    attributes:
+      label: What do you like?
+  - type: textarea
+    id: feedback-improvements
+    attributes:
+      label: What could be improved?
