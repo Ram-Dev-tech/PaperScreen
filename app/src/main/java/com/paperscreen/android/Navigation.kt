@@ -9,10 +9,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.paperscreen.android.ui.LauncherPager
+import com.paperscreen.android.reader.ui.LibraryScreen
+import com.paperscreen.android.reader.ui.ReaderScreen
 
 @Composable
 fun MainNavigation() {
-  val backStack = rememberNavBackStack(Main)
+  val backStack = rememberNavBackStack<Any>(Main)
 
   NavDisplay(
     backStack = backStack,
@@ -20,8 +22,28 @@ fun MainNavigation() {
     entryProvider =
       entryProvider {
         entry<Main> {
-          LauncherPager()
+          LauncherPager(
+            onLaunchLibrary = { backStack.add(Library) }
+          )
+        }
+        entry<Library> {
+          LibraryScreen(
+            onBookClick = { book ->
+              backStack.add(Reader(book.id))
+            },
+            onBack = { backStack.removeLastOrNull() }
+          )
+        }
+        entry<Reader> { entry ->
+          ReaderScreen(
+            bookId = entry.bookId,
+            onBack = { backStack.removeLastOrNull() }
+          )
         }
       },
   )
 }
+
+object Main
+object Library
+data class Reader(val bookId: Long)

@@ -2,6 +2,7 @@ package com.paperscreen.android.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onLaunchLibrary: () -> Unit) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -111,8 +112,12 @@ fun HomeScreen() {
         }
         
         // Placeholder grid/list for Favorite Apps
-        items(5) { index ->
-            AppListItemPlaceholder(appName = "Favorite App ${index + 1}")
+        item {
+            AppListItemPlaceholder(appName = "Paper Reader", onClick = onLaunchLibrary)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        items(4) { index ->
+            AppListItemPlaceholder(appName = "Favorite App ${index + 2}", onClick = {})
             Spacer(modifier = Modifier.height(16.dp))
         }
         
@@ -123,7 +128,7 @@ fun HomeScreen() {
 }
 
 @Composable
-fun AppListItemPlaceholder(appName: String) {
+fun AppListItemPlaceholder(appName: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -133,6 +138,7 @@ fun AppListItemPlaceholder(appName: String) {
                 color = MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(8.dp)
             )
+            .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

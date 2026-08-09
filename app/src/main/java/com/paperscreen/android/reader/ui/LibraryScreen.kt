@@ -17,29 +17,57 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.paperscreen.android.reader.data.BookEntity
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
-    books: List<BookEntity>,
+    viewModel: LibraryViewModel = viewModel(),
     onBookClick: (BookEntity) -> Unit,
-    onImportClick: () -> Unit,
     onBack: () -> Unit
 ) {
+    val books by viewModel.allBooks.collectAsState()
+    
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importDocument(uri)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Library", style = MaterialTheme.typography.titleLarge) },
+                navigationIcon = {
+                    Button(onClick = onBack) { Text("Back") }
+                },
                 actions = {
-                    IconButton(onClick = onImportClick) {
-                        Icon(Icons.Default.Add, contentDescription = "Import Book")
+                    IconButton(onClick = { 
+                        launcher.launch(arrayOf("text/plain", "application/epub+zip", "application/pdf", "application/octet-stream")) 
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add Book")
                     }
                 }
             )
         }
     ) { padding ->
         if (books.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No books imported yet.", style = MaterialTheme.typography.bodyLarge)
+            Column(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("No books yet", style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = {
+                    launcher.launch(arrayOf("text/plain", "application/epub+zip", "application/pdf", "application/octet-stream")) 
+                }) {
+                    Text("Add Book")
+                }
             }
         } else {
             LazyVerticalGrid(

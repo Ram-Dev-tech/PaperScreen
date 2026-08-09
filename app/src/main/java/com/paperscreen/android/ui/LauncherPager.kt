@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LauncherPager() {
+fun LauncherPager(onLaunchLibrary: () -> Unit) {
     // Horizontal pager for App Drawer (0) <- Home (1) -> Focus (2)
     val horizontalState = rememberPagerState(initialPage = 1, pageCount = { 3 })
     
@@ -30,7 +30,7 @@ fun LauncherPager() {
                 ) { vPage ->
                     when (vPage) {
                         0 -> ControlCenterScreen()
-                        1 -> HomeScreen()
+                        1 -> HomeScreen(onLaunchLibrary = onLaunchLibrary)
                         2 -> SearchScreen()
                     }
                 }
