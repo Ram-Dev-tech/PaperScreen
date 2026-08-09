@@ -1,0 +1,37 @@
+[
+  {
+    "word": "brown",
+    "partOfSpeech": "adjective",
+    "definition": "of a color produced by mixing red, yellow, and black, as of dark wood or rich soil.",
+    "pronunciation": "/braʊn/",
+    "example": "The dog had brown fur."
+  },
+  {
+    "word": "fox",
+    "partOfSpeech": "noun",
+    "definition": "a carnivorous mammal of the dog family with a pointed muzzle and bushy tail, proverbial for its cunning.",
+    "pronunciation": "/fɒks/",
+    "example": "The quick brown fox jumps over the lazy dog."
+  },
+  {
+    "word": "quick",
+    "partOfSpeech": "adjective",
+    "definition": "moving fast or doing something in a short time.",
+    "pronunciation": "/kwɪk/",
+    "example": "She took a quick glance at the clock."
+  },
+  {
+    "word": "lazy",
+    "partOfSpeech": "adjective",
+    "definition": "unwilling to work or use energy.",
+    "pronunciation": "/ˈleɪzi/",
+    "example": "He was too lazy to cook."
+  },
+  {
+    "word": "dog",
+    "partOfSpeech": "noun",
+    "definition": "a domesticated carnivorous mammal that typically has a long snout, an acute sense of smell, and a barking, howling, or whining voice.",
+    "pronunciation": "/dɒɡ/",
+    "example": "I took my dog for a walk."
+  }
+]

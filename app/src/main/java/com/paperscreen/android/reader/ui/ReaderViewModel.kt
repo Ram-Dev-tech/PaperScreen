@@ -194,6 +194,19 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun addBookmark(label: String) {
+        val book = currentBook ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertBookmark(
+                com.paperscreen.android.reader.data.BookmarkEntity(
+                    bookId = book.id,
+                    position = book.currentPosition,
+                    label = label
+                )
+            )
+        }
+    }
+
     fun updateSettings(settings: ReaderSettings) {
         viewModelScope.launch {
             settingsManager.updateSettings(settings)

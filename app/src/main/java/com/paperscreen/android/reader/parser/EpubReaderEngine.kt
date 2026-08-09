@@ -5,20 +5,23 @@ import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.readium.r2.shared.publication.Publication
-import org.readium.r2.shared.publication.asset.FileAsset
-import org.readium.r2.shared.publication.services.locatorService
-import org.readium.r2.streamer.Streamer
+import org.readium.r2.shared.publication.Locator
+import org.readium.r2.shared.util.http.DefaultHttpClient
+import org.readium.r2.shared.util.asset.AssetRetriever
+import org.readium.r2.shared.util.Url
+import org.readium.r2.shared.util.AbsoluteUrl
+import org.readium.r2.streamer.PublicationOpener
 import org.readium.r2.streamer.parser.epub.EpubParser
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import org.json.JSONObject
 
 data class EpubTocItem(val title: String, val chapterIndex: Int)
 
 class EpubReaderEngine(private val context: Context, private val uri: Uri) {
 
     private var publication: Publication? = null
-    private var streamer: Streamer? = null
     
     // We must copy the URI to a local file because Readium FileAsset requires a File
     private var localEpubFile: File? = null
@@ -34,14 +37,21 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
             }
             localEpubFile = tempFile
 
-            val asset = FileAsset(tempFile)
-            
-            streamer = Streamer(context, parsers = listOf(EpubParser()))
-            val result = streamer?.open(asset, allowUserInteraction = false)
+            val httpClient = DefaultHttpClient()
+            val assetRetriever = AssetRetriever(
+                contentResolver = context.contentResolver, 
+                httpClient = httpClient
+            )
 
-            result?.onSuccess { pub ->
-                publication = pub
-            }
+            val publicationOpener = PublicationOpener(
+                publicationParser = EpubParser() // Use EpubParser directly
+            )
+
+            val url = AbsoluteUrl(tempFile.absolutePath) ?: return@withContext false
+            val asset = assetRetriever.retrieve(url).getOrNull() ?: return@withContext false
+
+            val pub = publicationOpener.open(asset, allowUserInteraction = false).getOrNull()
+            publication = pub
             
             return@withContext publication != null
         } catch (e: Exception) {
@@ -58,7 +68,8 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
         val link = links[index]
         val resource = pub.get(link)
         
-        resource.readAsString().getOrNull()
+        val bytes = resource?.read()?.getOrNull()
+        if (bytes != null) String(bytes, Charsets.UTF_8) else null
     }
 
     fun getLocatorForChapter(index: Int): String? {
@@ -66,11 +77,13 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
         val links = pub.readingOrder
         if (index < 0 || index >= links.size) return null
         val link = links[index]
-        val locator = org.readium.r2.shared.publication.Locator(
-            href = link.href,
-            type = link.type ?: "application/xhtml+xml",
+        val urlStr = link.href.toString()
+        val locatorUrl = org.readium.r2.shared.util.Url(urlStr) ?: return null
+        val locator = Locator(
+            href = locatorUrl,
+            mediaType = link.mediaType ?: org.readium.r2.shared.util.mediatype.MediaType.HTML,
             title = link.title,
-            locations = org.readium.r2.shared.publication.Locator.Locations(progression = 0.0)
+            locations = Locator.Locations(progression = 0.0)
         )
         return locator.toJSON().toString()
     }
@@ -78,9 +91,9 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
     fun getChapterIndexFromLocator(json: String): Int {
         val pub = publication ?: return 0
         try {
-            val locator = org.readium.r2.shared.publication.Locator.fromJSON(org.json.JSONObject(json))
+            val locator = Locator.fromJSON(JSONObject(json))
             if (locator != null) {
-                val index = pub.readingOrder.indexOfFirst { it.href == locator.href }
+                val index = pub.readingOrder.indexOfFirst { it.href.toString() == locator.href.toString() }
                 if (index != -1) return index
             }
         } catch (e: Exception) {
@@ -108,7 +121,7 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
         if (pub.tableOfContents.isNotEmpty()) {
             for (link in pub.tableOfContents) {
                 // Find chapter index by matching href in readingOrder
-                val index = pub.readingOrder.indexOfFirst { it.href == link.href || link.href.startsWith(it.href + "#") }
+                val index = pub.readingOrder.indexOfFirst { it.href.toString() == link.href.toString() || link.href.toString().startsWith(it.href.toString() + "#") }
                 if (index != -1) {
                     toc.add(EpubTocItem(title = link.title ?: "Chapter ${index + 1}", chapterIndex = index))
                 }

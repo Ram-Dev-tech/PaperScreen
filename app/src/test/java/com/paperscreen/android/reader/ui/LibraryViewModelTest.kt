@@ -10,6 +10,8 @@ class LibraryViewModelTest {
         BookEntity(
             uriString = "uri1",
             title = "A Book",
+            author = null,
+            coverUriString = null,
             fileType = "TXT",
             progressPercentage = 0f,
             isFavorite = false,
@@ -18,6 +20,8 @@ class LibraryViewModelTest {
         BookEntity(
             uriString = "uri2",
             title = "B Book",
+            author = null,
+            coverUriString = null,
             fileType = "EPUB",
             progressPercentage = 0.5f,
             isFavorite = true,
@@ -26,6 +30,8 @@ class LibraryViewModelTest {
         BookEntity(
             uriString = "uri3",
             title = "C Book",
+            author = null,
+            coverUriString = null,
             fileType = "PDF",
             progressPercentage = 1f,
             isFavorite = false,
@@ -34,6 +40,8 @@ class LibraryViewModelTest {
         BookEntity(
             uriString = "uri4",
             title = "D Book",
+            author = null,
+            coverUriString = null,
             fileType = "TXT",
             progressPercentage = 0f,
             isFavorite = false,

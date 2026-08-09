@@ -10,19 +10,64 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.paperscreen.android.reader.parser.PdfReaderEngineFacade
+import com.paperscreen.android.reader.settings.ReaderSettingsManager
+import com.paperscreen.android.reader.settings.ReaderSettings
+import com.paperscreen.android.reader.settings.readerDataStore
+import com.paperscreen.android.dictionary.engine.DictionaryManager
+import com.paperscreen.android.dictionary.model.DictionaryDefinition
+import com.paperscreen.android.dictionary.ui.DictionaryPopup
+import com.paperscreen.android.dictionary.ui.WordActionMenu
+import androidx.compose.foundation.lazy.itemsIndexed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+
+data class SelectionState(
+    val word: String,
+    val chunkIndex: Int,
+    val paraIndex: Int,
+    val startIndex: Int,
+    val endIndex: Int,
+    val anchorX: Int,
+    val anchorY: Int
+)
+
+fun getWordBoundaries(text: String, index: Int): Pair<Int, Int>? {
+    val breakIterator = java.text.BreakIterator.getWordInstance()
+    breakIterator.setText(text)
+    
+    var start = breakIterator.preceding(index + 1)
+    if (start == java.text.BreakIterator.DONE) start = 0
+    
+    var end = breakIterator.following(index)
+    if (end == java.text.BreakIterator.DONE) end = text.length
+    
+    if (start < end) {
+        val word = text.substring(start, end)
+        if (word.any { it.isLetterOrDigit() }) {
+            return Pair(start, end)
+        }
+    }
+    return null
+}
 
 @Composable
 fun ReaderScreen(
@@ -30,18 +75,29 @@ fun ReaderScreen(
     viewModel: ReaderViewModel = viewModel(),
     onBack: () -> Unit
 ) {
-    val state by viewModel.state.collectAsState()
-    val settings by viewModel.settingsState.collectAsState()
-    var showSettings by remember { mutableStateOf(false) }
-    var showToc by remember { mutableStateOf(false) }
-
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
+    
+    val settingsManager = remember { ReaderSettingsManager(context.readerDataStore) }
+    val settings by settingsManager.settingsFlow.collectAsState(initial = ReaderSettings())
+    
+    val dictionaryManager = remember { DictionaryManager(context) }
+    var selectionState by remember { mutableStateOf<SelectionState?>(null) }
+    var dictionaryPopupDefinitions by remember { mutableStateOf<List<DictionaryDefinition>?>(null) }
+    val availableLanguages by dictionaryManager.getAvailableLanguages().collectAsState(initial = emptyList())
+    var currentLanguageCode by remember { mutableStateOf("en") }
+
+    val state by viewModel.state.collectAsState()
+    var showSettings by remember { mutableStateOf(false) }
+    var showToc by remember { mutableStateOf(false) }
 
     val currentSuccessState by rememberUpdatedState(state as? ReaderState.Success)
     var onStopFlush: (() -> Unit)? by remember { mutableStateOf(null) }
 
     LaunchedEffect(bookId) {
+        dictionaryManager.ensureDefaultDictionaryInstalled()
+        currentLanguageCode = dictionaryManager.getCurrentLanguage()
         viewModel.loadBook(bookId)
     }
 
@@ -166,7 +222,6 @@ fun ReaderScreen(
                             }
                         }
                     } else {
-                        // TXT or EPUB
                         val hMargin = when (settings.margins) {
                             "Narrow" -> 8.dp
                             "Wide" -> 32.dp
@@ -207,28 +262,72 @@ fun ReaderScreen(
                                     bottom = 120.dp
                                 )
                             ) {
-                                items(currentState.contentChunks) { chunk ->
-                                    // Treat double newlines as paragraphs manually
+                                itemsIndexed(currentState.contentChunks.toList()) { chunkIndex, chunk ->
                                     val paragraphs = chunk.split("\n\n")
                                     Column {
-                                        paragraphs.forEach { para ->
-                                            if (para.isNotBlank()) {
+                                        paragraphs.forEachIndexed { paraIndex, para ->
+                                            val text = para.trim()
+                                            if (text.isNotBlank()) {
+                                                var textLayoutResult by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
+                                                var globalPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+
+                                                val isSelectedPara = selectionState?.chunkIndex == chunkIndex && selectionState?.paraIndex == paraIndex
+                                                val displayText = if (isSelectedPara && selectionState != null) {
+                                                    buildAnnotatedString {
+                                                        append(text)
+                                                        addStyle(
+                                                            style = SpanStyle(
+                                                                background = MaterialTheme.colorScheme.onBackground,
+                                                                color = MaterialTheme.colorScheme.background
+                                                            ),
+                                                            start = selectionState!!.startIndex,
+                                                            end = selectionState!!.endIndex
+                                                        )
+                                                    }
+                                                } else {
+                                                    androidx.compose.ui.text.AnnotatedString(text)
+                                                }
+
                                                 Text(
-                                                    text = para.trim(),
+                                                    text = displayText,
                                                     fontSize = settings.fontSize.sp,
                                                     fontFamily = fontFamily,
                                                     fontWeight = fontWeight,
                                                     lineHeight = (settings.fontSize * settings.lineSpacing).sp,
                                                     letterSpacing = settings.letterSpacing.sp,
                                                     textAlign = textAlign,
-                                                    modifier = Modifier.padding(bottom = settings.paragraphSpacing.dp)
+                                                    onTextLayout = { textLayoutResult = it },
+                                                    modifier = Modifier
+                                                        .padding(bottom = settings.paragraphSpacing.dp)
+                                                        .onGloballyPositioned { layoutCoordinates ->
+                                                            globalPosition = layoutCoordinates.positionInRoot()
+                                                        }
+                                                        .pointerInput(Unit) {
+                                                            detectCustomLongPress { offset ->
+                                                                val layout = textLayoutResult ?: return@detectCustomLongPress
+                                                                val charIndex = layout.getOffsetForPosition(offset)
+                                                                val wordBounds = getWordBoundaries(text, charIndex)
+                                                                if (wordBounds != null) {
+                                                                    val anchorX = (globalPosition.x + offset.x).roundToInt()
+                                                                    val anchorY = (globalPosition.y + offset.y).roundToInt()
+                                                                    selectionState = SelectionState(
+                                                                        word = text.substring(wordBounds.first, wordBounds.second),
+                                                                        chunkIndex = chunkIndex,
+                                                                        paraIndex = paraIndex,
+                                                                        startIndex = wordBounds.first,
+                                                                        endIndex = wordBounds.second,
+                                                                        anchorX = anchorX,
+                                                                        anchorY = anchorY
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
                                                 )
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
                         }
                     }
                     
@@ -258,6 +357,60 @@ fun ReaderScreen(
                             }
                         }
                     }
+
+                    selectionState?.let { sel ->
+                        WordActionMenu(
+                            anchorX = sel.anchorX,
+                            anchorY = sel.anchorY,
+                            onDictionary = {
+                                coroutineScope.launch {
+                                    dictionaryPopupDefinitions = dictionaryManager.lookup(sel.word, currentLanguageCode)
+                                    selectionState = null
+                                }
+                            },
+                            onHighlight = { selectionState = null },
+                            onMark = { 
+                                viewModel.addBookmark("Marked word: ${sel.word}")
+                                selectionState = null 
+                            },
+                            onSearchGoogle = {
+                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                    data = android.net.Uri.parse("https://www.google.com/search?q=${sel.word}")
+                                }
+                                context.startActivity(intent)
+                                selectionState = null
+                            },
+                            onCopy = {
+                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Copied Word", sel.word))
+                                selectionState = null
+                            },
+                            onShare = {
+                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_TEXT, sel.word)
+                                }
+                                context.startActivity(android.content.Intent.createChooser(intent, "Share word"))
+                                selectionState = null
+                            },
+                            onDismiss = { selectionState = null }
+                        )
+                    }
+
+                    dictionaryPopupDefinitions?.let { defs ->
+                        DictionaryPopup(
+                            definitions = defs,
+                            availableLanguages = availableLanguages,
+                            currentLanguageCode = currentLanguageCode,
+                            onLanguageSelected = { lang ->
+                                coroutineScope.launch {
+                                    dictionaryManager.setCurrentLanguage(lang)
+                                    currentLanguageCode = lang
+                                }
+                            },
+                            onDismiss = { dictionaryPopupDefinitions = null }
+                        )
+                    }
                 }
             }
         }
@@ -265,8 +418,8 @@ fun ReaderScreen(
         if (showSettings) {
             ReaderSettingsSheet(
                 settings = settings,
-                onSettingsChanged = { viewModel.updateSettings(it) },
-                onReset = { viewModel.resetSettingsToDefault() },
+                onSettingsChanged = { coroutineScope.launch { settingsManager.updateSettings(it) } },
+                onReset = { coroutineScope.launch { settingsManager.resetToDefault() } },
                 onDismiss = { showSettings = false }
             )
         }
