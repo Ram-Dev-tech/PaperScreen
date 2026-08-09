@@ -1,5 +1,6 @@
 package com.paperscreen.android
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,12 +8,19 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import com.paperscreen.android.theme.PaperScreenTheme
 
 class MainActivity : ComponentActivity() {
+  
+  // Use a state to trigger re-routing when a new intent arrives
+  private val initialIntentState = mutableStateOf<Intent?>(null)
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    initialIntentState.value = intent
 
     // Prevent launcher from exiting on back press
     onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
@@ -26,10 +34,17 @@ class MainActivity : ComponentActivity() {
       PaperScreenTheme { 
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { 
           com.paperscreen.android.paper.engine.PaperEnvironment {
-            MainNavigation() 
+            MainNavigation(initialIntent = initialIntentState.value) 
           }
         } 
       }
+    }
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    if (intent.action == Intent.ACTION_VIEW) {
+      initialIntentState.value = intent
     }
   }
 }
