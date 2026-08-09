@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 
 val Context.readerDataStore: DataStore<Preferences> by preferencesDataStore(name = "reader_settings")
 
-class ReaderSettingsManager(private val context: Context) {
+class ReaderSettingsManager(private val dataStore: DataStore<Preferences>) {
     
     companion object {
         val FONT_SIZE = intPreferencesKey("font_size")
@@ -23,7 +23,7 @@ class ReaderSettingsManager(private val context: Context) {
         val ALIGNMENT = stringPreferencesKey("alignment")
     }
 
-    val settingsFlow: Flow<ReaderSettings> = context.readerDataStore.data.map { preferences ->
+    val settingsFlow: Flow<ReaderSettings> = dataStore.data.map { preferences ->
         ReaderSettings(
             fontSize = preferences[FONT_SIZE] ?: 18,
             fontFamily = preferences[FONT_FAMILY] ?: "SansSerif",
@@ -38,7 +38,7 @@ class ReaderSettingsManager(private val context: Context) {
     }
 
     suspend fun updateSettings(settings: ReaderSettings) {
-        context.readerDataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences[FONT_SIZE] = settings.fontSize
             preferences[FONT_FAMILY] = settings.fontFamily
             preferences[FONT_WEIGHT] = settings.fontWeight
@@ -52,7 +52,7 @@ class ReaderSettingsManager(private val context: Context) {
     }
     
     suspend fun resetToDefault() {
-        context.readerDataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             preferences.clear()
         }
     }

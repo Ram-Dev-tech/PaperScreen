@@ -12,6 +12,7 @@ import com.paperscreen.android.reader.parser.ReaderEngine
 import com.paperscreen.android.reader.parser.TxtReaderEngineFacade
 import com.paperscreen.android.reader.settings.ReaderSettings
 import com.paperscreen.android.reader.settings.ReaderSettingsManager
+import com.paperscreen.android.reader.settings.readerDataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,7 +39,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     private val db = PaperReaderDatabase.getDatabase(application)
     private val dao = db.readerDao()
 
-    private val settingsManager = ReaderSettingsManager(application)
+    private val settingsManager = ReaderSettingsManager(application.readerDataStore)
     val settingsState: StateFlow<ReaderSettings> = settingsManager.settingsFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

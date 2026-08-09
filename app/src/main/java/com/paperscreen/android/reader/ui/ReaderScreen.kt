@@ -37,6 +37,9 @@ fun ReaderScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
+    val currentSuccessState by rememberUpdatedState(state as? ReaderState.Success)
+    var onStopFlush: (() -> Unit)? by remember { mutableStateOf(null) }
+
     LaunchedEffect(bookId) {
         viewModel.loadBook(bookId)
     }
@@ -44,7 +47,7 @@ fun ReaderScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
-                // Backgrounding logic handles save automatically via snapshotFlow below
+                onStopFlush?.invoke()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -84,6 +87,22 @@ fun ReaderScreen(
                 is ReaderState.Success -> {
                     val initialIndex = currentState.initialPosition.toIntOrNull() ?: 0
                     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+
+                    onStopFlush = {
+                        val s = currentSuccessState
+                        if (s != null) {
+                            val index = listState.firstVisibleItemIndex
+                            val totalItems = listState.layoutInfo.totalItemsCount
+                            val progress = if (totalItems <= 1) 1f else index.toFloat() / (totalItems - 1)
+                            val finalProgress = if (progress >= 0.99f) 1.0f else progress
+                            val posToSave = if (s.contentPositions.isNotEmpty()) {
+                                s.contentPositions.getOrNull(index) ?: index.toString()
+                            } else {
+                                index.toString()
+                            }
+                            viewModel.saveReadingState(posToSave, finalProgress)
+                        }
+                    }
 
                     LaunchedEffect(listState) {
                         snapshotFlow { listState.firstVisibleItemIndex }
@@ -172,7 +191,7 @@ fun ReaderScreen(
                                     // Treat double newlines as paragraphs manually
                                     val paragraphs = chunk.split("\n\n")
                                     Column {
-                                        paragraphs.forEachIndexed { i, para ->
+                                        paragraphs.forEach { para ->
                                             if (para.isNotBlank()) {
                                                 Text(
                                                     text = para.trim(),
@@ -182,7 +201,7 @@ fun ReaderScreen(
                                                     lineHeight = (settings.fontSize * settings.lineSpacing).sp,
                                                     letterSpacing = settings.letterSpacing.sp,
                                                     textAlign = textAlign,
-                                                    modifier = Modifier.padding(bottom = if (i == paragraphs.size - 1) settings.paragraphSpacing.dp else settings.paragraphSpacing.dp)
+                                                    modifier = Modifier.padding(bottom = settings.paragraphSpacing.dp)
                                                 )
                                             }
                                         }
