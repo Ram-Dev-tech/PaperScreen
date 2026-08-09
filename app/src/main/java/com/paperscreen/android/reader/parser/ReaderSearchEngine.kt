@@ -40,46 +40,59 @@ class ReaderSearchEngine(private val application: Application, private val engin
             try {
                 application.contentResolver.openInputStream(uri)?.use { inputStream ->
                     InputStreamReader(inputStream).use { reader ->
-                        val chunkSize = 4096
-                        val overlapSize = query.length * 2
-                        val buffer = CharArray(chunkSize + overlapSize)
-                        
-                        var charsRead: Int
-                        var currentAbsoluteOffset = 0L
-                        
-                        var readOffset = 0
-                        
-                        while (reader.read(buffer, readOffset, chunkSize).also { charsRead = it } != -1) {
-                            val totalToSearch = readOffset + charsRead
-                            val chunkString = String(buffer, 0, totalToSearch)
-                            
-                            var index = chunkString.indexOf(query, ignoreCase = true)
-                            while (index >= 0 && index < charsRead) {
-                                // Match found
-                                val startSnippet = maxOf(0, index - 30)
-                                val endSnippet = minOf(chunkString.length, index + query.length + 30)
-                                val snippet = chunkString.substring(startSnippet, endSnippet).replace("\n", " ")
-                                
-                                val matchAbsoluteOffset = currentAbsoluteOffset + index
-                                emit(SearchResult(positionIdentifier = matchAbsoluteOffset.toString(), chapterIndex = 0, snippet = "...$snippet..."))
-                                
-                                index = chunkString.indexOf(query, startIndex = index + query.length, ignoreCase = true)
-                            }
-                            
-                            currentAbsoluteOffset += charsRead
-                            
-                            // Copy overlap to beginning of buffer
-                            if (totalToSearch > overlapSize) {
-                                System.arraycopy(buffer, totalToSearch - overlapSize, buffer, 0, overlapSize)
-                                readOffset = overlapSize
-                            } else {
-                                readOffset = 0
-                            }
-                        }
+                        searchTxt(reader, query).collect { emit(it) }
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+    companion object {
+        // Extracted for pure JVM testing
+        suspend fun searchTxt(reader: java.io.Reader, query: String): Flow<SearchResult> = flow {
+            val chunkSize = 4096
+            val overlapSize = minOf(query.length * 2, chunkSize)
+            val buffer = CharArray(chunkSize + overlapSize)
+            
+            var absoluteOffsetOfBufferStart = 0L
+            var lastEmittedMatchAbsoluteOffset = -1L
+            var readOffset = 0
+            var charsRead: Int
+            
+            while (reader.read(buffer, readOffset, chunkSize).also { charsRead = it } != -1) {
+                val totalValid = readOffset + charsRead
+                val chunkString = String(buffer, 0, totalValid)
+                
+                var index = chunkString.indexOf(query, ignoreCase = true)
+                while (index >= 0) {
+                    val matchAbsoluteOffset = absoluteOffsetOfBufferStart + index
+                    
+                    if (matchAbsoluteOffset > lastEmittedMatchAbsoluteOffset) {
+                        val startSnippet = maxOf(0, index - 30)
+                        val endSnippet = minOf(chunkString.length, index + query.length + 30)
+                        val snippet = chunkString.substring(startSnippet, endSnippet).replace("\n", " ")
+                        
+                        emit(SearchResult(
+                            positionIdentifier = matchAbsoluteOffset.toString(),
+                            chapterIndex = 0,
+                            snippet = "...$snippet..."
+                        ))
+                        lastEmittedMatchAbsoluteOffset = matchAbsoluteOffset
+                    }
+                    
+                    index = chunkString.indexOf(query, startIndex = index + query.length, ignoreCase = true)
+                }
+                
+                val charsToKeep = minOf(totalValid, overlapSize)
+                if (charsToKeep > 0) {
+                    System.arraycopy(buffer, totalValid - charsToKeep, buffer, 0, charsToKeep)
+                    absoluteOffsetOfBufferStart += (totalValid - charsToKeep)
+                    readOffset = charsToKeep
+                } else {
+                    absoluteOffsetOfBufferStart += totalValid
+                    readOffset = 0
+                }
             }
         }
     }
