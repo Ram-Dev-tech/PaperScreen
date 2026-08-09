@@ -27,8 +27,11 @@ fun MainNavigation(initialIntent: Intent? = null) {
       initialIntent.data?.let { uri ->
         val uriString = uri.toString()
         val mimeType = initialIntent.type
-        // Navigate to Viewer
-        backStack.add(Viewer(uriString, mimeType))
+        // Navigate to Viewer only if it is not already the top destination
+        val top = backStack.lastOrNull()
+        if (top !is Viewer || top.uriString != uriString) {
+          backStack.add(Viewer(uriString, mimeType))
+        }
       }
     }
   }

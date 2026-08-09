@@ -335,13 +335,6 @@ fun TxtViewerContent(engine: TxtViewerEngine, viewModel: PaperViewerViewModel) {
             },
             onHighlight = { /* Not supported in Viewer */ selectionState = null },
             onMark = { /* Not supported in Viewer */ selectionState = null },
-            onSearchGoogle = {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = android.net.Uri.parse("https://www.google.com/search?q=${sel.word}")
-                }
-                context.startActivity(intent)
-                selectionState = null
-            },
             onCopy = {
                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                 clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Copied Word", sel.word))

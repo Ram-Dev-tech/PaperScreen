@@ -21,7 +21,6 @@ fun WordActionMenu(
     onDictionary: () -> Unit,
     onHighlight: () -> Unit,
     onMark: () -> Unit,
-    onSearchGoogle: () -> Unit,
     onCopy: () -> Unit,
     onShare: () -> Unit,
     onDismiss: () -> Unit
@@ -40,7 +39,6 @@ fun WordActionMenu(
             ActionMenuItem(text = "Dictionary", onClick = onDictionary)
             ActionMenuItem(text = "Highlight", onClick = onHighlight)
             ActionMenuItem(text = "Mark", onClick = onMark)
-            ActionMenuItem(text = "Search Google", onClick = onSearchGoogle)
             ActionMenuItem(text = "Copy", onClick = onCopy)
             ActionMenuItem(text = "Share", onClick = onShare)
         }

@@ -468,13 +468,6 @@ fun ReaderScreen(
                                 viewModel.addBookmark("Marked word: ${sel.word}")
                                 selectionState = null 
                             },
-                            onSearchGoogle = {
-                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                    data = android.net.Uri.parse("https://www.google.com/search?q=${sel.word}")
-                                }
-                                context.startActivity(intent)
-                                selectionState = null
-                            },
                             onCopy = {
                                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                                 clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Copied Word", sel.word))
