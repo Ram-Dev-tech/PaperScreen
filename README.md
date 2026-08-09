@@ -93,13 +93,15 @@ SHA-256: `85e97f0bd6bb88f49522382cf4cf7bc253e763f4c798819ae74fdfd43cc7e85f`
 
 ## 📱 Installation
 
-1. Open the v1.0 GitHub Release.
-2. Download `PaperScreen-v1.0.apk` to your Android phone.
-3. Open the downloaded APK.
-4. Allow installation from the requested source if Android asks.
-5. Install PaperScreen.
-6. Open PaperScreen.
-7. If desired, select PaperScreen as your default Home app.
+1. Open the [v1.0 GitHub Release](https://github.com/Ram-Dev-tech/PaperScreen/releases/tag/v1.0) in your Android phone's web browser (e.g., Chrome).
+2. Scroll down to the **Assets** section at the bottom of the release notes.
+3. Tap on `PaperScreen-v1.0.apk` to download the file to your Android phone.
+4. Once downloaded, tap **Open** on the download notification, or locate the APK in your phone's **Downloads** folder using a file manager.
+5. Open the downloaded APK.
+6. If your phone asks for permission to install unknown apps, tap **Settings** and turn on **Allow from this source**.
+7. Tap **Install** to install PaperScreen.
+8. Open PaperScreen.
+9. If desired, select PaperScreen as your default Home app when prompted by Android.
 
 ## 📱 Requirements
 
