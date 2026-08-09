@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -196,15 +197,144 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
 
     fun addBookmark(label: String) {
         val book = currentBook ?: return
+        val pos = book.currentPosition
         viewModelScope.launch(Dispatchers.IO) {
-            dao.insertBookmark(
-                com.paperscreen.android.reader.data.BookmarkEntity(
+            val existing = dao.getBookmarksForBook(book.id).first().find { it.position == pos }
+            if (existing == null) {
+                dao.insertBookmark(
+                    com.paperscreen.android.reader.data.BookmarkEntity(
+                        bookId = book.id,
+                        position = pos,
+                        label = label
+                    )
+                )
+            }
+        }
+    }
+
+    fun jumpToPosition(position: String) {
+        val engine = currentEngine ?: return
+        val book = currentBook ?: return
+        if (book.fileType == "EPUB") {
+            val epubEngine = engine as EpubReaderEngineFacade
+            val chapterIndex = epubEngine.getChapterIndexFromLocator(position)
+            loadEpubChapter(chapterIndex)
+        } else if (book.fileType == "TXT") {
+            // For TXT we re-trigger loading the chunks from the offset
+            val offset = position.toLongOrNull() ?: 0L
+            val txtEngine = engine as TxtReaderEngineFacade
+            viewModelScope.launch(Dispatchers.IO) {
+                val chunks = mutableListOf<String>()
+                val positions = mutableListOf<String>()
+                var currOffset = offset
+                
+                for (i in 0..50) {
+                    positions.add(currOffset.toString())
+                    val result = txtEngine.readChunk(currOffset, 4000)
+                    if (result.first.isEmpty()) break
+                    chunks.add(result.first)
+                    currOffset = result.second
+                    if (currOffset <= 0) break
+                }
+                
+                val currentState = _state.value as? ReaderState.Success ?: return@launch
+                _state.value = currentState.copy(
+                    initialPosition = position,
+                    contentChunks = chunks,
+                    contentPositions = positions
+                )
+            }
+        }
+    }
+
+    fun addHighlight(positionIdentifier: String, startIndex: Int, endIndex: Int, selectedText: String) {
+        val book = currentBook ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertHighlight(
+                com.paperscreen.android.reader.data.HighlightEntity(
                     bookId = book.id,
-                    position = book.currentPosition,
-                    label = label
+                    fileType = book.fileType,
+                    positionIdentifier = positionIdentifier,
+                    startIndex = startIndex,
+                    endIndex = endIndex,
+                    selectedText = selectedText
                 )
             )
         }
+    }
+
+    fun getHighlightsForPosition(positionIdentifier: String): kotlinx.coroutines.flow.Flow<List<com.paperscreen.android.reader.data.HighlightEntity>> {
+        val book = currentBook ?: return kotlinx.coroutines.flow.flowOf(emptyList())
+        return dao.getHighlightsForPosition(book.id, positionIdentifier)
+    }
+
+    fun getBookmarks() = currentBook?.let { dao.getBookmarksForBook(it.id) } ?: kotlinx.coroutines.flow.flowOf(emptyList())
+
+    fun deleteBookmark(bookmark: com.paperscreen.android.reader.data.BookmarkEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteBookmark(bookmark)
+        }
+    }
+
+    fun getNotesForHighlight(highlightId: Long) = dao.getNotesForHighlight(highlightId)
+
+    fun addNote(highlightId: Long, text: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insertNote(
+                com.paperscreen.android.reader.data.NoteEntity(
+                    highlightId = highlightId,
+                    text = text
+                )
+            )
+        }
+    }
+
+    fun updateNote(note: com.paperscreen.android.reader.data.NoteEntity, newText: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.updateNote(note.copy(text = newText, updatedAt = System.currentTimeMillis()))
+        }
+    }
+
+    fun deleteNote(note: com.paperscreen.android.reader.data.NoteEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteNote(note)
+        }
+    }
+
+    fun deleteHighlight(highlight: com.paperscreen.android.reader.data.HighlightEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteHighlight(highlight)
+        }
+    }
+
+    private val _searchResults = MutableStateFlow<List<com.paperscreen.android.reader.parser.SearchResult>>(emptyList())
+    val searchResults: StateFlow<List<com.paperscreen.android.reader.parser.SearchResult>> = _searchResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    fun searchBook(query: String) {
+        val engine = currentEngine ?: return
+        _isSearching.value = true
+        _searchResults.value = emptyList()
+        val searchEngine = com.paperscreen.android.reader.parser.ReaderSearchEngine(getApplication(), engine)
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                searchEngine.search(query).collect { result ->
+                    val currentList = _searchResults.value.toMutableList()
+                    currentList.add(result)
+                    _searchResults.value = currentList
+                }
+            } finally {
+                _isSearching.value = false
+            }
+        }
+    }
+
+    fun clearSearch() {
+        _searchResults.value = emptyList()
+        _isSearching.value = false
     }
 
     fun updateSettings(settings: ReaderSettings) {

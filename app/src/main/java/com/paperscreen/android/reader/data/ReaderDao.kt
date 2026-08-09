@@ -52,4 +52,30 @@ interface ReaderDao {
 
     @Delete
     suspend fun deleteBookmark(bookmark: BookmarkEntity)
+
+    // Highlights
+    @Query("SELECT * FROM highlights WHERE bookId = :bookId ORDER BY createdAt DESC")
+    fun getHighlightsForBook(bookId: Long): Flow<List<HighlightEntity>>
+
+    @Query("SELECT * FROM highlights WHERE bookId = :bookId AND positionIdentifier = :positionIdentifier")
+    fun getHighlightsForPosition(bookId: Long, positionIdentifier: String): Flow<List<HighlightEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertHighlight(highlight: HighlightEntity): Long
+
+    @Delete
+    suspend fun deleteHighlight(highlight: HighlightEntity)
+
+    // Notes
+    @Query("SELECT * FROM notes WHERE highlightId = :highlightId ORDER BY createdAt DESC")
+    fun getNotesForHighlight(highlightId: Long): Flow<List<NoteEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNote(note: NoteEntity): Long
+
+    @Update
+    suspend fun updateNote(note: NoteEntity)
+
+    @Delete
+    suspend fun deleteNote(note: NoteEntity)
 }
