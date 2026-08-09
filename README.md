@@ -1,134 +1,115 @@
 # PaperScreen
 
-A minimalist, privacy-focused Android launcher and reading environment.
+A minimalist, privacy-focused Android launcher and reading environment designed for eye comfort, distraction-free use, focused reading, and everyday productivity.
 
-![Android 7.0+](https://img.shields.io/badge/Android-7.0%2B-brightgreen.svg)
-![Kotlin](https://img.shields.io/badge/Kotlin-Yes-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
-![Release v1.0](https://img.shields.io/badge/Release-v1.0-blue.svg)
+PaperScreen turns Android into a calmer, paper-like environment where your apps, documents, reading, and essential tools stay simple and focused.
 
---------------------------------------------------
+## Why PaperScreen?
 
-## 🚀 Feature Highlights
+👁️ Eye Comfort
+A soft paper-inspired visual environment using the restrained `#D8D6CF` paper and `#444444` ink palette.
 
-**Minimalist Android Launcher**
-- Works as an Android Home launcher
-- Discovers installed applications locally
-- Adaptive application grid
+🧘 Distraction-Free
+A minimalist home environment designed to reduce unnecessary visual clutter and keep attention on what matters.
+
+📖 Focused Reading
+A dedicated Reader and Viewer for EPUB, TXT, PDF, and images without turning the application into a file manager or browser.
+
+⚡ Productivity
+Quick access to installed apps, local search, offline dictionary tools, reading tools, and essential Android functions.
+
+## Features
+
+### 🏠 Minimalist Home
+- Paper-like Android home environment
+- Installed apps shown in a clean adaptive grid
 - Local app search
-- External app icons retain their original colors
+- Original colors preserved for installed app icons
+- Can be selected as the Android default Home app
 
-**📖 Paper Reader**
-- EPUB reading
-- TXT reading
+### 📖 Focused Reader
+- EPUB
+- TXT
 - Bookmarks
-- Persistent highlights
+- Highlights
 - Notes
 - In-book search
+- Offline dictionary support
 
-**📄 Paper Viewer**
-- PDF viewing
-- TXT viewing
-- JPG/JPEG, PNG, WEBP viewing
-- External `ACTION_VIEW` integration
+### 📄 Paper Viewer
+- PDF
+- TXT
+- JPG/JPEG
+- PNG
+- WEBP
+- Android `ACTION_VIEW` support
 - `content://` URI support
-- EPUB bridge to Paper Reader
+- EPUB handoff to Paper Reader
 
-**📚 Offline Dictionary**
-- English seed dictionary
-- Hindi seed dictionary
-- Offline lookup
-- Word selection
+### 📚 Offline Dictionary
+- Offline word lookup
+- English and Hindi dictionary data
 - No cloud dictionary service
+- Designed to work without an internet connection
 
-**💬 Help & Feedback**
+### 💬 Help & Feedback
 - Report problems
 - Suggest ideas
 - Give feedback
 - GitHub project access
 
-**🔒 Privacy**
-- Offline-first architecture
-- No analytics
-- No telemetry
-- No Firebase
-- No GitHub API
-- No background tracking
-- No `QUERY_ALL_PACKAGES`
-- No WebView
+## 🎨 PaperScreen Design
 
---------------------------------------------------
+PaperScreen uses a restrained paper-and-ink visual language:
 
-## Design
+- **Paper:** `#D8D6CF`
+- **Ink:** `#444444`
 
-PaperScreen UI uses a restrained paper-and-ink visual system. External installed-app icons retain their original Android colors.
+The goal is a calm, simple interface with minimal visual noise.
 
-- **Paper (Background):** `#D8D6CF`
-- **Ink (Text/Foreground):** `#444444`
+External installed-app icons are intentionally allowed to retain their original Android colors.
 
---------------------------------------------------
+## 📄 Supported Content
 
-## Supported Content
-
-| Format | Support |
-|--------|---------|
-| PDF | Viewer |
-| TXT | Viewer + Reader features where applicable |
+| Format | Experience |
+|--------|------------|
+| PDF | Paper Viewer |
+| TXT | Paper Viewer / Reader |
 | EPUB | Paper Reader |
-| JPG/JPEG | Viewer |
-| PNG | Viewer |
-| WEBP | Viewer |
+| JPG/JPEG | Paper Viewer |
+| PNG | Paper Viewer |
+| WEBP | Paper Viewer |
 
---------------------------------------------------
+## 📥 Download PaperScreen
 
-## Requirements
+PaperScreen v1.0 is available as an Android APK through the official GitHub Release.
 
-- **OS:** Android 7.0 (API 24) or newer
-- **Target SDK:** 36
-- PaperScreen can optionally be selected as the default Home app
+[**Download PaperScreen v1.0**](https://github.com/Ram-Dev-tech/PaperScreen/releases/tag/v1.0)
 
---------------------------------------------------
+File: `PaperScreen-v1.0.apk`  
+SHA-256: `85e97f0bd6bb88f49522382cf4cf7bc253e763f4c798819ae74fdfd43cc7e85f`
 
-## Download
+*Note: PaperScreen v1.0 is currently distributed as an unsigned release APK.*
 
-Use the official GitHub Release to download the application.
+## 📱 Installation
 
-[**PaperScreen v1.0 Release**](https://github.com/Ram-Dev-tech/PaperScreen/releases/tag/v1.0)
+1. Open the v1.0 GitHub Release.
+2. Download `PaperScreen-v1.0.apk` to your Android phone.
+3. Open the downloaded APK.
+4. Allow installation from the requested source if Android asks.
+5. Install PaperScreen.
+6. Open PaperScreen.
+7. If desired, select PaperScreen as your default Home app.
 
-> **Note:** PaperScreen v1.0 is currently distributed as an unsigned release APK.
+## 📱 Requirements
 
-**File:** `PaperScreen-v1.0.apk`  
-**SHA-256:** `85e97f0bd6bb88f49522382cf4cf7bc253e763f4c798819ae74fdfd43cc7e85f`
+- Android 7.0 (API 24) or newer
+- PaperScreen v1.0 targets Android SDK 36
+- Optional: set PaperScreen as your default Home app
 
-You can verify the checksum of the downloaded APK by running the following command in your terminal:
-```bash
-sha256sum PaperScreen-v1.0.apk
-```
+## 🔒 Privacy First
 
---------------------------------------------------
-
-## Build from Source
-
-To build PaperScreen from source, follow these steps:
-
-```bash
-git clone https://github.com/Ram-Dev-tech/PaperScreen.git
-cd PaperScreen
-./gradlew assembleDebug
-```
-
-For release builds:
-
-```bash
-./gradlew assembleRelease
-```
-*Note: A release build may be unsigned depending on your local signing configuration.*
-
---------------------------------------------------
-
-## Privacy
-
-PaperScreen is designed with a strict privacy-first architecture:
+PaperScreen is designed to keep its core experience local and offline.
 
 - No analytics
 - No telemetry
@@ -137,23 +118,11 @@ PaperScreen is designed with a strict privacy-first architecture:
 - No GitHub API
 - No WebView
 - No `QUERY_ALL_PACKAGES`
-- Offline-first core functionality
-- The external browser is only used when the user explicitly chooses GitHub feedback or project links. Opening an external GitHub link through `ACTION_VIEW` hands control to the user's chosen external application.
+- No cloud dependency for core reading and dictionary features
 
---------------------------------------------------
+When you choose Help & Feedback, PaperScreen opens the link using Android's external `ACTION_VIEW` mechanism. You remain in control of whether and what information you submit.
 
-## Architecture
-
-At a high-level, PaperScreen is composed of the following modules:
-
-- **Launcher** → PaperScreen Home
-- **Reader** → EPUB / TXT
-- **Viewer** → PDF / TXT / Images
-- **Dictionary** → Offline Room-backed dictionaries
-
---------------------------------------------------
-
-## Feedback & Support
+## 💬 Feedback & Support
 
 To get help or provide feedback, please visit our GitHub Issues page:
 
@@ -161,27 +130,20 @@ To get help or provide feedback, please visit our GitHub Issues page:
 💡 [Suggest an idea](https://github.com/Ram-Dev-tech/PaperScreen/issues)  
 💬 [Give feedback](https://github.com/Ram-Dev-tech/PaperScreen/issues)
 
-[**Visit the GitHub Project**](https://github.com/Ram-Dev-tech/PaperScreen)
+[Visit the PaperScreen GitHub project](https://github.com/Ram-Dev-tech/PaperScreen)
 
---------------------------------------------------
+## 🛠️ Future Improvements
 
-## Roadmap
+- Broader device compatibility
+- Expanded dictionary datasets
+- More launcher customization
+- Continued Reader and Viewer improvements
+- Performance and usability improvements
 
-Future plans for PaperScreen include:
+## 📜 License
 
-- Improve device compatibility
-- Expand dictionary datasets
-- Improve launcher customization
-- Improve reader/viewer performance
-
---------------------------------------------------
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
---------------------------------------------------
+PaperScreen is released under the [MIT License](LICENSE).
 
 ## Credits
 
-PaperScreen is built using native Android technologies including Kotlin and Jetpack Compose.
+Built with Kotlin, Jetpack Compose, and native Android technologies.
