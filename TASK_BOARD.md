@@ -20,17 +20,16 @@
 - [x] Create and integrate the official PaperScreen two-tone adaptive launcher icon with legacy fallbacks.
 
 ## Current Tasks
-- [ ] Set up Git, .gitignore, and memory files.
-- [ ] Connect to GitHub and perform initial push.
+- [x] Phase 9G: Offline Dictionary & Word Selection Features
 
 ## Pending Tasks
+- [ ] Phase 9H: Future Reader Features
 - [ ] Implement E-Ink flash transition effect.
 - [ ] Implement App Exclusion launching logic.
 - [ ] Build Backup/Restore functionality for settings.
-- [ ] Unit testing.
+- [ ] Complete robust unit testing strategy (address SDK 36 test environment limitations).
 
 ## Future Tasks
-- [ ] Full E-ink Reader app functionality.
 - [ ] Full Notes app functionality.
 - [ ] Gallery rendering capabilities.
 - [ ] Complete browser functionality.
