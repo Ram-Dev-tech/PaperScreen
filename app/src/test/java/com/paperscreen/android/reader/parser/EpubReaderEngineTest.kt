@@ -71,4 +71,33 @@ class EpubReaderEngineTest {
         assertNull(engine.getLocatorForChapter(-1))
         assertNull(engine.getLocatorForChapter(2))
     }
+
+    @Test
+    fun `test EpubReaderEngine TOC fallback to readingOrder`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val engine = EpubReaderEngine(context, Uri.parse("file://dummy"))
+        
+        // Inject a dummy Publication with EMPTY tableOfContents
+        val manifest = Manifest(
+            metadata = Metadata(localizedTitle = LocalizedString("Test Book No TOC")),
+            readingOrder = listOf(
+                Link(href = "/chapter1.xhtml", title = "First Chapter"),
+                Link(href = "/chapter2.xhtml", title = "Second Chapter")
+            ),
+            tableOfContents = emptyList() // Empty TOC triggers fallback
+        )
+        val publication = Publication(manifest)
+        
+        val pubField = EpubReaderEngine::class.java.getDeclaredField("publication")
+        pubField.isAccessible = true
+        pubField.set(engine, publication)
+
+        // Test TOC fallback mapping
+        val toc = engine.getTableOfContents()
+        assertEquals(2, toc.size)
+        assertEquals("First Chapter", toc[0].title)
+        assertEquals(0, toc[0].chapterIndex)
+        assertEquals("Second Chapter", toc[1].title)
+        assertEquals(1, toc[1].chapterIndex)
+    }
 }
