@@ -10,10 +10,14 @@ import com.paperscreen.android.reader.parser.EpubReaderEngineFacade
 import com.paperscreen.android.reader.parser.PdfReaderEngineFacade
 import com.paperscreen.android.reader.parser.ReaderEngine
 import com.paperscreen.android.reader.parser.TxtReaderEngineFacade
+import com.paperscreen.android.reader.settings.ReaderSettings
+import com.paperscreen.android.reader.settings.ReaderSettingsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 sealed class ReaderState {
@@ -33,6 +37,13 @@ sealed class ReaderState {
 class ReaderViewModel(application: Application) : AndroidViewModel(application) {
     private val db = PaperReaderDatabase.getDatabase(application)
     private val dao = db.readerDao()
+
+    private val settingsManager = ReaderSettingsManager(application)
+    val settingsState: StateFlow<ReaderSettings> = settingsManager.settingsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ReaderSettings()
+    )
 
     private val _state = MutableStateFlow<ReaderState>(ReaderState.Loading)
     val state: StateFlow<ReaderState> = _state.asStateFlow()
@@ -148,6 +159,18 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
         
         viewModelScope.launch(Dispatchers.IO) {
             dao.updateBook(updatedBook)
+        }
+    }
+
+    fun updateSettings(settings: ReaderSettings) {
+        viewModelScope.launch {
+            settingsManager.updateSettings(settings)
+        }
+    }
+
+    fun resetSettingsToDefault() {
+        viewModelScope.launch {
+            settingsManager.resetToDefault()
         }
     }
 

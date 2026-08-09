@@ -11,6 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -28,6 +31,9 @@ fun ReaderScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val settings by viewModel.settingsState.collectAsState()
+    var showSettings by remember { mutableStateOf(false) }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -38,8 +44,7 @@ fun ReaderScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
-                // Ensure state is saved when leaving or backgrounding
-                // Real save logic handled via debounced snapshotFlow below, but we could flush here.
+                // Backgrounding logic handles save automatically via snapshotFlow below
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -57,6 +62,9 @@ fun ReaderScreen(
                 },
                 navigationIcon = {
                     Button(onClick = onBack) { Text("Back") }
+                },
+                actions = {
+                    Button(onClick = { showSettings = true }) { Text("Aa") }
                 }
             )
         }
@@ -120,28 +128,80 @@ fun ReaderScreen(
                         }
                     } else {
                         // TXT or EPUB
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            state = listState,
-                            contentPadding = PaddingValues(
-                                start = 16.dp, 
-                                end = 16.dp, 
-                                top = 16.dp, 
-                                bottom = 120.dp
-                            )
-                        ) {
-                            items(currentState.contentChunks) { chunk ->
-                                Text(
-                                    text = chunk,
-                                    fontSize = 18.sp,
-                                    lineHeight = 27.sp,
-                                    modifier = Modifier.padding(bottom = 16.dp)
+                        val hMargin = when (settings.margins) {
+                            "Narrow" -> 8.dp
+                            "Wide" -> 32.dp
+                            else -> 16.dp
+                        }
+                        val maxWidth = when (settings.textWidth) {
+                            "Narrow" -> 400.dp
+                            "Comfortable" -> 600.dp
+                            else -> 10000.dp
+                        }
+                        val fontFamily = when (settings.fontFamily) {
+                            "Serif" -> FontFamily.Serif
+                            "Monospace" -> FontFamily.Monospace
+                            else -> FontFamily.SansSerif
+                        }
+                        val fontWeight = when (settings.fontWeight) {
+                            "Medium" -> FontWeight.Medium
+                            "Bold" -> FontWeight.Bold
+                            else -> FontWeight.Normal
+                        }
+                        val textAlign = when (settings.alignment) {
+                            "Center" -> TextAlign.Center
+                            "Right" -> TextAlign.Right
+                            "Justify" -> TextAlign.Justify
+                            else -> TextAlign.Left
+                        }
+
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .widthIn(max = maxWidth),
+                                state = listState,
+                                contentPadding = PaddingValues(
+                                    start = hMargin, 
+                                    end = hMargin, 
+                                    top = 16.dp, 
+                                    bottom = 120.dp
                                 )
+                            ) {
+                                items(currentState.contentChunks) { chunk ->
+                                    // Treat double newlines as paragraphs manually
+                                    val paragraphs = chunk.split("\n\n")
+                                    Column {
+                                        paragraphs.forEachIndexed { i, para ->
+                                            if (para.isNotBlank()) {
+                                                Text(
+                                                    text = para.trim(),
+                                                    fontSize = settings.fontSize.sp,
+                                                    fontFamily = fontFamily,
+                                                    fontWeight = fontWeight,
+                                                    lineHeight = (settings.fontSize * settings.lineSpacing).sp,
+                                                    letterSpacing = settings.letterSpacing.sp,
+                                                    textAlign = textAlign,
+                                                    modifier = Modifier.padding(bottom = if (i == paragraphs.size - 1) settings.paragraphSpacing.dp else settings.paragraphSpacing.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+        
+        if (showSettings) {
+            ReaderSettingsSheet(
+                settings = settings,
+                onSettingsChanged = { viewModel.updateSettings(it) },
+                onReset = { viewModel.resetSettingsToDefault() },
+                onDismiss = { showSettings = false }
+            )
         }
     }
 }
