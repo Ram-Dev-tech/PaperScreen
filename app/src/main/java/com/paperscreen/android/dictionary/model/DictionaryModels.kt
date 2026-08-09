@@ -4,7 +4,8 @@ data class DictionaryLanguage(
     val code: String,
     val displayName: String,
     val isInstalled: Boolean = false,
-    val isDefault: Boolean = false
+    val isDefault: Boolean = false,
+    val isBundled: Boolean = false
 )
 
 data class DictionaryDefinition(

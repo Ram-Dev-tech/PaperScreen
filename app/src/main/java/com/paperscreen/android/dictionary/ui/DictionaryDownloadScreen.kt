@@ -116,8 +116,17 @@ fun LanguageItem(
                 }
             }
         } else {
-            TextButton(onClick = onInstall, enabled = !isLoading) {
-                Text("Install")
+            if (language.isBundled) {
+                TextButton(onClick = onInstall, enabled = !isLoading) {
+                    Text("Install")
+                }
+            } else {
+                Text(
+                    text = "No dataset",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
             }
         }
     }

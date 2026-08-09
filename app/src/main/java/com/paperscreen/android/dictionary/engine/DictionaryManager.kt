@@ -38,10 +38,20 @@ class DictionaryManager(
     )
 
     fun getAvailableLanguages(): Flow<List<DictionaryLanguage>> {
+        val assetList = try {
+            context.assets.list("dictionaries")?.toList() ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+
         return dao.getAllPackagesFlow().map { installedPkgs ->
             val installedCodes = installedPkgs.map { it.languageCode }.toSet()
             availableLanguages.map { lang ->
-                lang.copy(isInstalled = installedCodes.contains(lang.code) || lang.isDefault)
+                val hasAsset = assetList.contains("${lang.code}.json")
+                lang.copy(
+                    isInstalled = installedCodes.contains(lang.code) || lang.isDefault,
+                    isBundled = hasAsset
+                )
             }
         }
     }
