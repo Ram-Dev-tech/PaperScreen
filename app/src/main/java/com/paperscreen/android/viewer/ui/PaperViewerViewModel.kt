@@ -95,6 +95,25 @@ class PaperViewerViewModel(application: Application) : AndroidViewModel(applicat
         return currentUri?.let { getFilenameFromUri(it) } ?: "document"
     }
 
+    fun bridgeToReader(onComplete: (Long) -> Unit) {
+        viewModelScope.launch {
+            currentUri?.let { uri ->
+                val bookEntity = com.paperscreen.android.reader.data.DocumentManager.importDocument(getApplication(), uri)
+                if (bookEntity != null) {
+                    val db = com.paperscreen.android.reader.data.PaperReaderDatabase.getDatabase(getApplication())
+                    val dao = db.readerDao()
+                    val existing = dao.getBookByUri(bookEntity.uriString)
+                    val id = if (existing == null) {
+                        dao.insertBook(bookEntity)
+                    } else {
+                        existing.id
+                    }
+                    onComplete(id)
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         currentEngine?.close()

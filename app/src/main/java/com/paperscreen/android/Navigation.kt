@@ -62,9 +62,9 @@ fun MainNavigation(initialIntent: Intent? = null) {
             uriString = entry.uriString,
             mimeType = entry.mimeType,
             onBack = { backStack.removeLastOrNull() },
-            onBridgeToReader = {
+            onBridgeToReader = { bookId ->
               backStack.removeLastOrNull()
-              backStack.add(Library)
+              backStack.add(Reader(bookId))
             }
           )
         }

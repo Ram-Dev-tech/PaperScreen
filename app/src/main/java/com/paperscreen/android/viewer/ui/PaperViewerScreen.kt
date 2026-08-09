@@ -38,7 +38,7 @@ fun PaperViewerScreen(
     uriString: String,
     mimeType: String?,
     onBack: () -> Unit,
-    onBridgeToReader: () -> Unit
+    onBridgeToReader: (Long) -> Unit
 ) {
     val viewModel: PaperViewerViewModel = viewModel()
     val state by viewModel.state.collectAsState()
@@ -114,7 +114,11 @@ fun PaperViewerScreen(
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
                         if (mimeType == "application/epub+zip" || uriString.endsWith(".epub", ignoreCase = true)) {
-                            Button(onClick = onBridgeToReader) {
+                            Button(onClick = {
+                                viewModel.bridgeToReader { bookId ->
+                                    onBridgeToReader(bookId)
+                                }
+                            }) {
                                 Text("Open in Paper Reader", color = MaterialTheme.colorScheme.background)
                             }
                         } else {
