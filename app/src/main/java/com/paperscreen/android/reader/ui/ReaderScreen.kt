@@ -33,6 +33,7 @@ fun ReaderScreen(
     val state by viewModel.state.collectAsState()
     val settings by viewModel.settingsState.collectAsState()
     var showSettings by remember { mutableStateOf(false) }
+    var showToc by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
@@ -67,6 +68,9 @@ fun ReaderScreen(
                     Button(onClick = onBack) { Text("Back") }
                 },
                 actions = {
+                    if (state is ReaderState.Success && (state as ReaderState.Success).fileType == "EPUB") {
+                        Button(onClick = { showToc = true }, modifier = Modifier.padding(end = 8.dp)) { Text("TOC") }
+                    }
                     Button(onClick = { showSettings = true }) { Text("Aa") }
                 }
             )
@@ -93,7 +97,15 @@ fun ReaderScreen(
                         if (s != null) {
                             val index = listState.firstVisibleItemIndex
                             val totalItems = listState.layoutInfo.totalItemsCount
-                            val progress = if (totalItems <= 1) 1f else index.toFloat() / (totalItems - 1)
+                            val chunkProgress = if (totalItems <= 1) 1f else index.toFloat() / (totalItems - 1)
+                            
+                            val progress = if (s.fileType == "EPUB") {
+                                if (s.chapterCount > 0) {
+                                    (s.chapterIndex.toFloat() + chunkProgress) / s.chapterCount.toFloat()
+                                } else 0f
+                            } else {
+                                chunkProgress
+                            }
                             val finalProgress = if (progress >= 0.99f) 1.0f else progress
                             val posToSave = if (s.contentPositions.isNotEmpty()) {
                                 s.contentPositions.getOrNull(index) ?: index.toString()
@@ -109,7 +121,15 @@ fun ReaderScreen(
                             .collectLatest { index ->
                                 delay(2000)
                                 val totalItems = listState.layoutInfo.totalItemsCount
-                                val progress = if (totalItems <= 1) 1f else index.toFloat() / (totalItems - 1)
+                                val chunkProgress = if (totalItems <= 1) 1f else index.toFloat() / (totalItems - 1)
+                                
+                                val progress = if (currentState.fileType == "EPUB") {
+                                    if (currentState.chapterCount > 0) {
+                                        (currentState.chapterIndex.toFloat() + chunkProgress) / currentState.chapterCount.toFloat()
+                                    } else 0f
+                                } else {
+                                    chunkProgress
+                                }
                                 val finalProgress = if (progress >= 0.99f) 1.0f else progress
                                 
                                 val posToSave = if (currentState.contentPositions.isNotEmpty()) {
@@ -209,6 +229,34 @@ fun ReaderScreen(
                                 }
                             }
                         }
+                        }
+                    }
+                    
+                    if (currentState.fileType == "EPUB") {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Button(
+                                    onClick = { viewModel.loadEpubChapter(currentState.chapterIndex - 1) },
+                                    enabled = currentState.chapterIndex > 0
+                                ) {
+                                    Text("< Prev")
+                                }
+                                Text("${currentState.chapterIndex + 1} / ${currentState.chapterCount}", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Button(
+                                    onClick = { viewModel.loadEpubChapter(currentState.chapterIndex + 1) },
+                                    enabled = currentState.chapterIndex < currentState.chapterCount - 1
+                                ) {
+                                    Text("Next >")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -220,6 +268,19 @@ fun ReaderScreen(
                 onSettingsChanged = { viewModel.updateSettings(it) },
                 onReset = { viewModel.resetSettingsToDefault() },
                 onDismiss = { showSettings = false }
+            )
+        }
+        
+        if (showToc && state is ReaderState.Success) {
+            val s = state as ReaderState.Success
+            EpubTocSheet(
+                toc = s.tableOfContents,
+                currentChapterIndex = s.chapterIndex,
+                onChapterSelect = { idx ->
+                    viewModel.loadEpubChapter(idx)
+                    showToc = false
+                },
+                onDismiss = { showToc = false }
             )
         }
     }

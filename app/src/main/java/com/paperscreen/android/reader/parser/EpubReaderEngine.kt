@@ -13,6 +13,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
+data class EpubTocItem(val title: String, val chapterIndex: Int)
+
 class EpubReaderEngine(private val context: Context, private val uri: Uri) {
 
     private var publication: Publication? = null
@@ -96,6 +98,31 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
 
     fun getChapterCount(): Int {
         return publication?.readingOrder?.size ?: 0
+    }
+
+    fun getTableOfContents(): List<EpubTocItem> {
+        val pub = publication ?: return emptyList()
+        val toc = mutableListOf<EpubTocItem>()
+        
+        // Try tableOfContents first
+        if (pub.tableOfContents.isNotEmpty()) {
+            for (link in pub.tableOfContents) {
+                // Find chapter index by matching href in readingOrder
+                val index = pub.readingOrder.indexOfFirst { it.href == link.href || link.href.startsWith(it.href + "#") }
+                if (index != -1) {
+                    toc.add(EpubTocItem(title = link.title ?: "Chapter ${index + 1}", chapterIndex = index))
+                }
+            }
+        }
+        
+        // Fallback to readingOrder if TOC is empty
+        if (toc.isEmpty()) {
+            pub.readingOrder.forEachIndexed { index, link ->
+                toc.add(EpubTocItem(title = link.title ?: "Chapter ${index + 1}", chapterIndex = index))
+            }
+        }
+        
+        return toc.distinctBy { it.chapterIndex }
     }
 
     fun getTitle(): String? {

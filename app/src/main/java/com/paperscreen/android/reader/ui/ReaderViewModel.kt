@@ -10,6 +10,7 @@ import com.paperscreen.android.reader.parser.EpubReaderEngineFacade
 import com.paperscreen.android.reader.parser.PdfReaderEngineFacade
 import com.paperscreen.android.reader.parser.ReaderEngine
 import com.paperscreen.android.reader.parser.TxtReaderEngineFacade
+import com.paperscreen.android.reader.parser.EpubTocItem
 import com.paperscreen.android.reader.settings.ReaderSettings
 import com.paperscreen.android.reader.settings.ReaderSettingsManager
 import com.paperscreen.android.reader.settings.readerDataStore
@@ -30,7 +31,10 @@ sealed class ReaderState {
         val initialPosition: String, // String to be parsed per format
         val contentChunks: List<String> = emptyList(), // For TXT/EPUB
         val contentPositions: List<String> = emptyList(), // To map UI chunk index back to absolute position
-        val pageCount: Int = 0 // For PDF
+        val pageCount: Int = 0, // For PDF
+        val chapterIndex: Int = 0, // For EPUB
+        val chapterCount: Int = 0, // For EPUB
+        val tableOfContents: List<EpubTocItem> = emptyList() // For EPUB
     ) : ReaderState()
     data class Error(val message: String) : ReaderState()
 }
@@ -111,7 +115,10 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                         engine = engine,
                         initialPosition = locatorStr,
                         contentChunks = listOf(stripped.text),
-                        contentPositions = listOf(locatorStr)
+                        contentPositions = listOf(locatorStr),
+                        chapterIndex = chapterIndex,
+                        chapterCount = epubEngine.getPageOrChapterCount(),
+                        tableOfContents = epubEngine.getTableOfContents()
                     )
                 } else {
                     val txtEngine = engine as TxtReaderEngineFacade
@@ -145,6 +152,30 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                 e.printStackTrace()
                 _state.value = ReaderState.Error(e.message ?: "Failed to open document")
             }
+        }
+    }
+
+    fun loadEpubChapter(index: Int) {
+        val epubEngine = currentEngine as? EpubReaderEngineFacade ?: return
+        val count = epubEngine.getPageOrChapterCount()
+        if (index < 0 || index >= count) return
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            val chapter = epubEngine.getChapterContent(index) ?: "No content"
+            val stripped = com.paperscreen.android.reader.parser.HtmlUtils.stripHtml(chapter)
+            val locatorStr = epubEngine.getLocatorForChapter(index) ?: "{}"
+            
+            val currentState = _state.value as? ReaderState.Success ?: return@launch
+            
+            _state.value = currentState.copy(
+                initialPosition = locatorStr,
+                contentChunks = listOf(stripped.text),
+                contentPositions = listOf(locatorStr),
+                chapterIndex = index
+            )
+            
+            val progress = index.toFloat() / count.toFloat()
+            saveReadingState(locatorStr, progress)
         }
     }
 

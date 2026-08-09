@@ -14,7 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 
 object HtmlUtils {
-    
+    fun stripHtml(html: String): AnnotatedString {
+        val cleanHtml = html
+            .replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
+            .replace(Regex("</p>\\s*<p>", RegexOption.IGNORE_CASE), "\n\n")
+            .replace(Regex("</h[1-6]>", RegexOption.IGNORE_CASE), "\n\n")
+            .replace(Regex("<h[1-6][^>]*>", RegexOption.IGNORE_CASE), "\n# ")
+        val spanned = android.text.Html.fromHtml(cleanHtml, android.text.Html.FROM_HTML_MODE_COMPACT)
+        return spannedToAnnotatedString(spanned)
+    }
+
     fun spannedToAnnotatedString(spanned: Spanned): AnnotatedString {
         return buildAnnotatedString {
             append(spanned.toString())
