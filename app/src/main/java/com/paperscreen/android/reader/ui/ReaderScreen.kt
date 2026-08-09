@@ -140,7 +140,7 @@ fun ReaderScreen(
                 is ReaderState.Error -> {
                     Text(
                         text = "Error: ${currentState.message}",
-                        color = MaterialTheme.colorScheme.error,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }

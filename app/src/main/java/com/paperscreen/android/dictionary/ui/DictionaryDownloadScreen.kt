@@ -124,7 +124,7 @@ fun LanguageItem(
                 Text(
                     text = "No dataset",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.padding(end = 16.dp)
                 )
             }
