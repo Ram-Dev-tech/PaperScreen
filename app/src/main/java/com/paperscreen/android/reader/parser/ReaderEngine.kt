@@ -50,4 +50,6 @@ class EpubReaderEngineFacade(context: Context, uri: Uri) : ReaderEngine() {
 
     suspend fun getChapterContent(index: Int): String? = engine.getChapterContent(index)
     fun getChapterTitle(index: Int): String? = engine.getChapterTitle(index)
+    fun getLocatorForChapter(index: Int): String? = engine.getLocatorForChapter(index)
+    fun getChapterIndexFromLocator(json: String): Int = engine.getChapterIndexFromLocator(json)
 }

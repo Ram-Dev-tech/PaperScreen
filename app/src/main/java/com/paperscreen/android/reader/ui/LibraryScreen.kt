@@ -21,6 +21,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
@@ -28,7 +30,10 @@ fun LibraryScreen(
     onBookClick: (BookEntity) -> Unit,
     onBack: () -> Unit
 ) {
-    val books by viewModel.allBooks.collectAsState()
+    val allBooks by viewModel.allBooks.collectAsState()
+    val continueReading by viewModel.continueReadingBooks.collectAsState()
+    val completed by viewModel.completedBooks.collectAsState()
+    val recent by viewModel.recentBooks.collectAsState()
     
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -55,7 +60,7 @@ fun LibraryScreen(
             )
         }
     ) { padding ->
-        if (books.isEmpty()) {
+        if (allBooks.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 verticalArrangement = Arrangement.Center,
@@ -77,8 +82,31 @@ fun LibraryScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(books) { book ->
-                    BookItem(book = book, onClick = { onBookClick(book) })
+                if (continueReading.isNotEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text("Continue Reading", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                    }
+                    items(continueReading) { book ->
+                        BookItem(book = book, onClick = { onBookClick(book) })
+                    }
+                }
+                if (completed.isNotEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text("Completed", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                    }
+                    items(completed) { book ->
+                        BookItem(book = book, onClick = { onBookClick(book) })
+                    }
+                }
+                
+                val others = allBooks.filter { !continueReading.contains(it) && !completed.contains(it) }
+                if (others.isNotEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(if (continueReading.isEmpty() && completed.isEmpty()) "All Books" else "Other Books", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                    }
+                    items(others) { book ->
+                        BookItem(book = book, onClick = { onBookClick(book) })
+                    }
                 }
             }
         }

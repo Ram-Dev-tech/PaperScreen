@@ -19,6 +19,12 @@ interface ReaderDao {
     @Query("SELECT * FROM books ORDER BY addedAt DESC LIMIT 10")
     fun getRecentlyAddedBooks(): Flow<List<BookEntity>>
     
+    @Query("SELECT * FROM books WHERE progressPercentage > 0 AND progressPercentage < 1.0 ORDER BY lastOpenedAt DESC")
+    fun getContinueReadingBooks(): Flow<List<BookEntity>>
+
+    @Query("SELECT * FROM books WHERE progressPercentage = 1.0 ORDER BY lastOpenedAt DESC")
+    fun getCompletedBooks(): Flow<List<BookEntity>>
+
     @Query("SELECT * FROM books ORDER BY lastOpenedAt DESC LIMIT 1")
     fun getRecentBook(): Flow<BookEntity?>
 

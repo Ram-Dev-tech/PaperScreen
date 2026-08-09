@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.paperscreen.android.reader.data.BookEntity
 import com.paperscreen.android.reader.data.PaperReaderDatabase
 import com.paperscreen.android.reader.parser.EpubReaderEngineFacade
 import com.paperscreen.android.reader.parser.PdfReaderEngineFacade
@@ -21,7 +22,9 @@ sealed class ReaderState {
         val title: String,
         val fileType: String,
         val engine: ReaderEngine,
+        val initialPosition: String, // String to be parsed per format
         val contentChunks: List<String> = emptyList(), // For TXT/EPUB
+        val contentPositions: List<String> = emptyList(), // To map UI chunk index back to absolute position
         val pageCount: Int = 0 // For PDF
     ) : ReaderState()
     data class Error(val message: String) : ReaderState()
@@ -35,6 +38,7 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
     val state: StateFlow<ReaderState> = _state.asStateFlow()
 
     private var currentEngine: ReaderEngine? = null
+    private var currentBook: BookEntity? = null
 
     fun loadBook(bookId: Long) {
         _state.value = ReaderState.Loading
@@ -45,9 +49,13 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                     _state.value = ReaderState.Error("Book not found")
                     return@launch
                 }
+                
+                // Update last opened
+                currentBook = book.copy(lastOpenedAt = System.currentTimeMillis())
+                dao.updateBook(currentBook!!)
 
-                val uri = Uri.parse(book.uriString)
-                val engine: ReaderEngine = when (book.fileType) {
+                val uri = Uri.parse(currentBook!!.uriString)
+                val engine: ReaderEngine = when (currentBook!!.fileType) {
                     "TXT" -> TxtReaderEngineFacade(getApplication(), uri)
                     "EPUB" -> EpubReaderEngineFacade(getApplication(), uri)
                     "PDF" -> PdfReaderEngineFacade(getApplication(), uri)
@@ -61,30 +69,50 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                     return@launch
                 }
 
-                if (book.fileType == "PDF") {
+                if (currentBook!!.fileType == "PDF") {
                     val pdfEngine = engine as PdfReaderEngineFacade
                     _state.value = ReaderState.Success(
-                        title = book.title,
+                        title = currentBook!!.title,
                         fileType = "PDF",
                         engine = engine,
+                        initialPosition = currentBook!!.currentPosition,
                         pageCount = pdfEngine.getPageOrChapterCount()
                     )
-                } else if (book.fileType == "EPUB") {
+                } else if (currentBook!!.fileType == "EPUB") {
                     val epubEngine = engine as EpubReaderEngineFacade
-                    val chapter = epubEngine.getChapterContent(0) ?: "No content"
+                    
+                    // Parse locator to get chapter index (fallback to 0)
+                    var chapterIndex = 0
+                    if (currentBook!!.currentPosition.isNotEmpty()) {
+                        chapterIndex = epubEngine.getChapterIndexFromLocator(currentBook!!.currentPosition)
+                    }
+
+                    val chapter = epubEngine.getChapterContent(chapterIndex) ?: "No content"
                     val stripped = com.paperscreen.android.reader.parser.HtmlUtils.stripHtml(chapter)
+                    
+                    // Generate a proper Readium Locator JSON string
+                    val locatorStr = epubEngine.getLocatorForChapter(chapterIndex) ?: "{}"
+
                     _state.value = ReaderState.Success(
-                        title = book.title,
+                        title = currentBook!!.title,
                         fileType = "EPUB",
                         engine = engine,
-                        contentChunks = listOf(stripped.text)
+                        initialPosition = locatorStr,
+                        contentChunks = listOf(stripped.text),
+                        contentPositions = listOf(locatorStr)
                     )
                 } else {
                     val txtEngine = engine as TxtReaderEngineFacade
-                    // Just read first chunks as a test
                     val chunks = mutableListOf<String>()
+                    val positions = mutableListOf<String>()
                     var offset = 0L
-                    for (i in 0..10) {
+                    
+                    if (currentBook!!.currentPosition.isNotEmpty()) {
+                        offset = currentBook!!.currentPosition.toLongOrNull() ?: 0L
+                    }
+
+                    for (i in 0..50) { // Load more chunks to allow scrolling
+                        positions.add(offset.toString())
                         val result = txtEngine.readChunk(offset, 4000)
                         if (result.first.isEmpty()) break
                         chunks.add(result.first)
@@ -92,10 +120,12 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                         if (offset <= 0) break // End of file
                     }
                     _state.value = ReaderState.Success(
-                        title = book.title,
+                        title = currentBook!!.title,
                         fileType = "TXT",
                         engine = engine,
-                        contentChunks = chunks
+                        initialPosition = currentBook!!.currentPosition,
+                        contentChunks = chunks,
+                        contentPositions = positions
                     )
                 }
 
@@ -103,6 +133,21 @@ class ReaderViewModel(application: Application) : AndroidViewModel(application) 
                 e.printStackTrace()
                 _state.value = ReaderState.Error(e.message ?: "Failed to open document")
             }
+        }
+    }
+
+    fun saveReadingState(position: String, progress: Float) {
+        val book = currentBook ?: return
+        val clampedProgress = progress.coerceIn(0f, 1f)
+        val updatedBook = book.copy(
+            currentPosition = position,
+            progressPercentage = clampedProgress,
+            lastOpenedAt = System.currentTimeMillis()
+        )
+        currentBook = updatedBook
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.updateBook(updatedBook)
         }
     }
 

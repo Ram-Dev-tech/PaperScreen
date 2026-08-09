@@ -59,6 +59,34 @@ class EpubReaderEngine(private val context: Context, private val uri: Uri) {
         resource.readAsString().getOrNull()
     }
 
+    fun getLocatorForChapter(index: Int): String? {
+        val pub = publication ?: return null
+        val links = pub.readingOrder
+        if (index < 0 || index >= links.size) return null
+        val link = links[index]
+        val locator = org.readium.r2.shared.publication.Locator(
+            href = link.href,
+            type = link.type ?: "application/xhtml+xml",
+            title = link.title,
+            locations = org.readium.r2.shared.publication.Locator.Locations(progression = 0.0)
+        )
+        return locator.toJSON().toString()
+    }
+
+    fun getChapterIndexFromLocator(json: String): Int {
+        val pub = publication ?: return 0
+        try {
+            val locator = org.readium.r2.shared.publication.Locator.fromJSON(org.json.JSONObject(json))
+            if (locator != null) {
+                val index = pub.readingOrder.indexOfFirst { it.href == locator.href }
+                if (index != -1) return index
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return 0
+    }
+
     fun getChapterTitle(index: Int): String? {
         val pub = publication ?: return null
         val links = pub.readingOrder

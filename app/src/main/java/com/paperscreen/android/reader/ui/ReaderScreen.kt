@@ -4,15 +4,21 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.paperscreen.android.reader.parser.PdfReaderEngineFacade
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
@@ -22,12 +28,25 @@ fun ReaderScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
-    
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(bookId) {
         viewModel.loadBook(bookId)
     }
 
-    val coroutineScope = rememberCoroutineScope()
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                // Ensure state is saved when leaving or backgrounding
+                // Real save logic handled via debounced snapshotFlow below, but we could flush here.
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -55,8 +74,28 @@ fun ReaderScreen(
                     )
                 }
                 is ReaderState.Success -> {
+                    val initialIndex = currentState.initialPosition.toIntOrNull() ?: 0
+                    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
+
+                    LaunchedEffect(listState) {
+                        snapshotFlow { listState.firstVisibleItemIndex }
+                            .collectLatest { index ->
+                                delay(2000)
+                                val totalItems = listState.layoutInfo.totalItemsCount
+                                val progress = if (totalItems <= 1) 1f else index.toFloat() / (totalItems - 1)
+                                val finalProgress = if (progress >= 0.99f) 1.0f else progress
+                                
+                                val posToSave = if (currentState.contentPositions.isNotEmpty()) {
+                                    currentState.contentPositions.getOrNull(index) ?: index.toString()
+                                } else {
+                                    index.toString()
+                                }
+                                viewModel.saveReadingState(posToSave, finalProgress)
+                            }
+                    }
+
                     if (currentState.fileType == "PDF" && currentState.engine is PdfReaderEngineFacade) {
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                             items(currentState.pageCount) { index ->
                                 var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
                                 
@@ -83,6 +122,7 @@ fun ReaderScreen(
                         // TXT or EPUB
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
+                            state = listState,
                             contentPadding = PaddingValues(
                                 start = 16.dp, 
                                 end = 16.dp, 

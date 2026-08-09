@@ -25,6 +25,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     val favoriteBooks: StateFlow<List<BookEntity>> = dao.getFavoriteBooks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val continueReadingBooks: StateFlow<List<BookEntity>> = dao.getContinueReadingBooks()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val completedBooks: StateFlow<List<BookEntity>> = dao.getCompletedBooks()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun importDocument(uri: Uri) {
         viewModelScope.launch {
             // Validate and extract metadata
