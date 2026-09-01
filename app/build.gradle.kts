@@ -98,13 +98,6 @@ dependencies {
   implementation(libs.androidx.datastore.preferences)
   implementation(libs.kotlinx.serialization.json)
   
-  // Room
-  implementation(libs.androidx.room.runtime)
-  implementation(libs.androidx.room.ktx)
-  add("kapt", libs.androidx.room.compiler)
   
-  // Readium
-  implementation(libs.readium.shared)
-  implementation(libs.readium.streamer)
   coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

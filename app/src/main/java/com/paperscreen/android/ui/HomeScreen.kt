@@ -42,7 +42,7 @@ import com.paperscreen.android.launcher.LauncherUtil
 
 
 @Composable
-fun HomeScreen(onLaunchLibrary: () -> Unit) {
+fun HomeScreen(onLaunchSettings: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var isDefaultHome by remember { mutableStateOf(true) }
@@ -181,7 +181,7 @@ fun HomeScreen(onLaunchLibrary: () -> Unit) {
         
         // Placeholder grid/list for Favorite Apps
         item {
-            AppListItemPlaceholder(appName = "Paper Reader", onClick = onLaunchLibrary)
+            AppListItemPlaceholder(appName = "Settings", onClick = onLaunchSettings)
             Spacer(modifier = Modifier.height(16.dp))
         }
         items(4) { index ->

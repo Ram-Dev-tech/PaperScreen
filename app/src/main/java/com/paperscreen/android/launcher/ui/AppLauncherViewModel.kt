@@ -29,10 +29,9 @@ class AppLauncherViewModel(application: Application) : AndroidViewModel(applicat
 
     init {
         viewModelScope.launch {
-            repository.getLaunchableApps().collect { appList ->
-                allApps = appList
-                filterApps(_searchQuery.value)
-            }
+            val appList = repository.getInstalledApps()
+            allApps = appList
+            filterApps(_searchQuery.value)
         }
     }
 
@@ -46,7 +45,11 @@ class AppLauncherViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun launchExternalApp(packageName: String) {
-        repository.launchApp(packageName)
+        val intent = getApplication<Application>().packageManager.getLaunchIntentForPackage(packageName)
+        intent?.let {
+            it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            getApplication<Application>().startActivity(it)
+        }
     }
 
     companion object {
@@ -59,5 +62,4 @@ class AppLauncherViewModel(application: Application) : AndroidViewModel(applicat
             }
         }
     }
-
 }

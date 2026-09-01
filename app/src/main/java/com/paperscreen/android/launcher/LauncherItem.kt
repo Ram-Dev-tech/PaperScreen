@@ -1,24 +1,22 @@
 package com.paperscreen.android.launcher
 
-sealed interface LauncherItem {
-    val label: String
-    val iconKey: String
+sealed class LauncherItem {
+    abstract val label: String
+    abstract val iconKey: String
 }
 
 data class ExternalApp(
+    override val label: String,
     val packageName: String,
-    override val label: String
-) : LauncherItem {
-    override val iconKey: String get() = packageName
-}
-
-enum class PaperDestination {
-    LIBRARY, SETTINGS
-}
+    override val iconKey: String
+) : LauncherItem()
 
 data class PaperApp(
+    override val label: String,
     val destination: PaperDestination,
-    override val label: String
-) : LauncherItem {
-    override val iconKey: String get() = "paper_${destination.name}"
+    override val iconKey: String
+) : LauncherItem()
+
+enum class PaperDestination {
+    SETTINGS
 }
